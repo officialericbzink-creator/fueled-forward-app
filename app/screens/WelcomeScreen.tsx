@@ -8,12 +8,18 @@ import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
 import type { ThemedStyle } from "@/theme/types"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { Button } from "@/components/Button"
 
 const welcomeLogo = require("@assets/images/logo.png")
 const welcomeFace = require("@assets/images/welcome-face.png")
 
-export const WelcomeScreen: FC = function WelcomeScreen() {
+interface WelcomeScreenProps extends AppStackScreenProps<"Welcome"> {}
+
+export const WelcomeScreen: FC<WelcomeScreenProps> = function WelcomeScreen(_props) {
   const { themed, theme } = useAppTheme()
+
+  const { navigation } = _props
 
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
 
@@ -38,6 +44,18 @@ export const WelcomeScreen: FC = function WelcomeScreen() {
 
       <View style={themed([$bottomContainer, $bottomContainerInsets])}>
         <Text tx="welcomeScreen:postscript" size="md" />
+        <Button
+          testID="login-screen-button"
+          preset="reversed"
+          text={"Log In"}
+          onPress={() => navigation.navigate("Login")}
+        />
+        <Button
+          testID="login-screen-button"
+          preset="default"
+          text={"Sign Up"}
+          onPress={() => navigation.navigate("SignUp")}
+        />
       </View>
     </Screen>
   )

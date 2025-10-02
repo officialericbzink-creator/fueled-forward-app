@@ -1,4 +1,33 @@
 const en = {
+  auth: {
+    signIn: {
+      title: "Sign In",
+      subtitle: "Welcome back! Please sign in to your account.",
+      emailFieldLabel: "Email",
+      emailFieldPlaceholder: "Enter your email",
+      passwordFieldLabel: "Password",
+      passwordFieldPlaceholder: "Enter your password",
+      forgotPasswordButton: "Forgot Password?",
+      submitButton: "Sign In",
+      loadingButton: "Signing In...",
+      noAccountText: "Don't have an account?",
+      signUpButton: "Sign Up",
+    },
+    signUp: {
+      title: "Create Account",
+      subtitle: "Join us today! Create your account.",
+      emailFieldLabel: "Email",
+      emailFieldPlaceholder: "Enter your email",
+      passwordFieldLabel: "Password",
+      passwordFieldPlaceholder: "Create a password",
+      confirmPasswordFieldLabel: "Confirm Password",
+      confirmPasswordFieldPlaceholder: "Re-enter your password",
+      submitButton: "Sign Up",
+      loadingButton: "Creating Account...",
+      haveAccountText: "Already have an account?",
+      signInButton: "Sign In",
+    },
+  },
   common: {
     ok: "OK!",
     cancel: "Cancel",

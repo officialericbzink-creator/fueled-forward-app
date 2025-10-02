@@ -5,15 +5,20 @@
  * and a "main" flow which the user will use once logged in.
  */
 import { ComponentProps } from "react"
-import { NavigationContainer } from "@react-navigation/native"
+import { NavigationContainer, NavigatorScreenParams } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 
 import Config from "@/config"
+import { AuthNavigator, AuthNavigatorParamList } from "@/navigators/AuthNavigator"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
+import { LoginScreen } from "@/screens/LoginScreen"
+import { SignUpScreen } from "@/screens/SignUpScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
+import { authClient } from "../../lib/auth"
+import { useAuth } from "@/context/AuthContext"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -27,6 +32,9 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 export type AppStackParamList = {
   Welcome: undefined
   // 🔥 Your screens go here
+  Login: undefined
+  SignUp: undefined
+  Auth: NavigatorScreenParams<AuthNavigatorParamList>
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -45,6 +53,7 @@ export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStack
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
+  const { isAuthenticated } = useAuth()
   const {
     theme: { colors },
   } = useAppTheme()
@@ -58,9 +67,20 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
+      initialRouteName={isAuthenticated ? "Auth" : "Welcome"}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
       {/** 🔥 Your screens go here */}
+      {!isAuthenticated ? (
+        <>
+          <Stack.Screen name="Welcome" component={WelcomeScreen} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+        </>
+      )}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>
   )
