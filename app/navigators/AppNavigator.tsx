@@ -5,10 +5,19 @@
  * and a "main" flow which the user will use once logged in.
  */
 import { ComponentProps } from "react"
-import { NavigationContainer, NavigatorScreenParams } from "@react-navigation/native"
+import {
+  NavigationContainer,
+  NavigatorScreenParams,
+  useNavigation,
+  LinkingOptions,
+  getStateFromPath,
+} from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
+import * as Linking from "expo-linking"
+import { useEffect } from "react"
 
 import Config from "@/config"
+import { useAuth } from "@/context/AuthContext"
 import { AuthNavigator, AuthNavigatorParamList } from "@/navigators/AuthNavigator"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
@@ -17,8 +26,25 @@ import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
-import { authClient } from "../../lib/auth"
-import { useAuth } from "@/context/AuthContext"
+import { AIChatScreen } from "@/screens/ChatScreen"
+import { EmailVerificationScreen } from "@/screens/EmailVerificationScreen"
+import { SettingsNavigator, SettingsNavigatorParamList } from "./SettingsNavigator"
+import { OnboardingScreen } from "@/screens/OnboardingScreen"
+
+const prefix = Linking.createURL("/")
+
+const linking: LinkingOptions<AppStackParamList> = {
+  prefixes: [prefix],
+  config: {
+    screens: {
+      Welcome: "welcome",
+      Login: "login",
+      SignUp: "signup",
+      EmailVerification: "verify-email",
+    },
+    initialRouteName: "Welcome",
+  },
+}
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -35,6 +61,10 @@ export type AppStackParamList = {
   Login: undefined
   SignUp: undefined
   Auth: NavigatorScreenParams<AuthNavigatorParamList>
+  AIChat: undefined
+  Onboarding: undefined
+  EmailVerification: { token?: string; email?: string }
+  SettingsMain: NavigatorScreenParams<SettingsNavigatorParamList>
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -53,10 +83,17 @@ export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStack
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const {
     theme: { colors },
   } = useAppTheme()
+
+  if (isLoading) {
+    return null // Or a loading component
+  }
+
+  const emailVerified = user?.emailVerified ?? false
+  // const completedOnboarding = user?.completedOnboarding ?? false
 
   return (
     <Stack.Navigator
@@ -64,21 +101,27 @@ const AppStack = () => {
         headerShown: false,
         navigationBarColor: colors.background,
         contentStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.palette.primary100,
         },
       }}
-      initialRouteName={isAuthenticated ? "Auth" : "Welcome"}
+      // initialRouteName={isAuthenticated ? "Auth" : "Welcome"}
     >
-      {/** 🔥 Your screens go here */}
       {!isAuthenticated ? (
         <>
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
+        </>
+      ) : isAuthenticated && !user?.completedOnboarding ? (
+        <>
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         </>
       ) : (
         <>
           <Stack.Screen name="Auth" component={AuthNavigator} />
+          <Stack.Screen name="AIChat" component={AIChatScreen} />
+          <Stack.Screen name="SettingsMain" component={SettingsNavigator} />
         </>
       )}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
@@ -94,8 +137,31 @@ export const AppNavigator = (props: NavigationProps) => {
 
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
+  // useEffect(() => {
+  //   // Listen for deep links when app is already open
+  //   const subscription = Linking.addEventListener("url", (event) => {
+  //     console.log("📱 Deep link received:", event.url)
+  //   })
+
+  //   // Check for deep link that opened the app
+  //   Linking.getInitialURL().then((url) => {
+  //     if (url) {
+  //       console.log("📱 App opened with URL:", url)
+  //     }
+  //   })
+
+  //   return () => subscription.remove()
+  // }, [])
+
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>
+    <NavigationContainer
+      linking={linking}
+      ref={navigationRef}
+      theme={navigationTheme}
+      // onReady={() => console.log("Navigation ready")}
+      // onStateChange={(state) => console.log("Navigation state changed:", state)}
+      {...props}
+    >
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
       </ErrorBoundary>

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
-// import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
@@ -16,6 +16,9 @@ import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
 import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
+import queryClient from "../lib/queryClient"
+import { SocketProvider } from "./context/AIChatContext"
+import { InAppSubscriptionProvider } from "./context/InAppSubscriptionContext"
 import { loadDateFnsLocale } from "./utils/formatDate"
 
 if (__DEV__) {
@@ -48,19 +51,6 @@ const config = {
   },
 }
 
-// Create QueryClient instance
-// const queryClient = new QueryClient({
-//   defaultOptions: {
-//     queries: {
-//       retry: 2,
-//       staleTime: 5 * 60 * 1000,
-//       gcTime: 10 * 60 * 1000,
-//       refetchOnWindowFocus: false,
-//       refetchOnReconnect: true,
-//     },
-//   },
-// })
-
 const linking = {
   prefixes: [prefix],
   config,
@@ -85,14 +75,18 @@ export function App() {
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <KeyboardProvider>
-        {/*<QueryClientProvider client={queryClient}>*/}
-        <ThemeProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-          <ToastWrapper />
-        </ThemeProvider>
-        {/*</QueryClientProvider>*/}
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <InAppSubscriptionProvider>
+                <SocketProvider>
+                  <AppContent />
+                </SocketProvider>
+              </InAppSubscriptionProvider>
+            </AuthProvider>
+            <ToastWrapper />
+          </ThemeProvider>
+        </QueryClientProvider>
       </KeyboardProvider>
     </SafeAreaProvider>
   )

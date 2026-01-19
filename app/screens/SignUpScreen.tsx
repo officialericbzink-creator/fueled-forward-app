@@ -1,6 +1,5 @@
 import { ComponentType, FC, useMemo, useRef, useState } from "react"
 import { Pressable, TextInput, View, ViewStyle } from "react-native"
-import { useNavigation } from "@react-navigation/native"
 
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
@@ -10,12 +9,13 @@ import { TextField, TextFieldAccessoryProps } from "@/components/TextField"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
 
 import { authClient } from "../../lib/auth"
 
 interface SignUpScreenProps extends AppStackScreenProps<"SignUp"> {}
 
-export const SignUpScreen: FC<SignUpScreenProps> = () => {
+export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
   const authPasswordInput = useRef<TextInput>(null)
   const confirmPasswordInput = useRef<TextInput>(null)
 
@@ -24,12 +24,17 @@ export const SignUpScreen: FC<SignUpScreenProps> = () => {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const navigation = useNavigation()
 
   const {
     themed,
     theme: { colors },
   } = useAppTheme()
+
+  useHeader({
+    leftIcon: "back",
+    onLeftPress: () => navigation.goBack(),
+    titleTx: "auth:signUp.title",
+  })
 
   const PasswordRightAccessory: ComponentType<TextFieldAccessoryProps> = useMemo(
     () =>
@@ -67,7 +72,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = () => {
       if (response.data) {
         // On successful sign up, navigate to the Welcome screen
         console.log(response.data)
-        navigation.navigate("Welcome")
+        navigation.navigate("Onboarding")
       } else {
         // Handle sign up failure (e.g., show an error message)
         console.error("Sign up failed:", response.error)

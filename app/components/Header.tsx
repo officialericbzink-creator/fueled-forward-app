@@ -1,5 +1,8 @@
 import { ReactElement } from "react"
 import {
+  Image,
+  ImageSourcePropType,
+  ImageStyle,
   StyleProp,
   TextStyle,
   TouchableOpacity,
@@ -128,6 +131,16 @@ export interface HeaderProps {
    * Override the default edges for the safe area.
    */
   safeAreaEdges?: ExtendedEdge[]
+  /**
+   * Optional image to display next to the title text.
+   *  Can be used to display a logo or avatar.
+   */
+  titleImage?: ImageSourcePropType
+  /**
+   * Optional style override for the title image.
+   *  Can be used to adjust the size or position of the image.
+   */
+  titleImageStyle?: StyleProp<ImageStyle>
 }
 
 interface HeaderActionProps {
@@ -178,6 +191,8 @@ export function Header(props: HeaderProps) {
     style: $styleOverride,
     titleStyle: $titleStyleOverride,
     containerStyle: $containerStyleOverride,
+    titleImage,
+    titleImageStyle: $titleImageStyleOverride,
   } = props
 
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
@@ -207,6 +222,7 @@ export function Header(props: HeaderProps) {
               $titleContainerStyleOverride,
             ]}
           >
+            {!!titleImage && <Image source={titleImage} style={$titleImageStyleOverride} />}
             <Text
               weight="medium"
               size="md"

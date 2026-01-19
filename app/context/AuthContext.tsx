@@ -1,6 +1,7 @@
-import { createContext, FC, PropsWithChildren, useContext, useCallback } from "react"
+import { createContext, FC, PropsWithChildren, useContext, useCallback, useEffect } from "react"
 
 import { authClient } from "../../lib/auth"
+import { SessionQueryParams } from "better-auth/types"
 
 export type AuthContextType = {
   // Session data
@@ -24,6 +25,8 @@ export type AuthContextType = {
 
   // Error state
   error: Error | null
+  refetch: (queryParams?: { query?: SessionQueryParams }) => void
+  isRefetching: boolean
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -32,7 +35,7 @@ export interface AuthProviderProps {}
 
 export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ children }) => {
   // Get session from Better Auth with loading states
-  const { data: session, isPending, error } = authClient.useSession()
+  const { data: session, isPending, error, refetch, isRefetching } = authClient.useSession()
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
@@ -53,7 +56,12 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   }, [])
 
   const signOut = useCallback(async () => {
-    await authClient.signOut()
+    // console.log("Signing out user...")
+    try {
+      await authClient.signOut()
+    } catch (err) {
+      console.error("Error signing out:", err)
+    }
   }, [])
 
   const value: AuthContextType = {
@@ -65,7 +73,15 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     signIn,
     signOut,
     error: error ?? null,
+    refetch,
+    isRefetching,
   }
+
+  // useEffect(() => {
+  //   if (session) {
+  //     console.log("Full session object:", JSON.stringify(session, null, 2))
+  //   }
+  // }, [session])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

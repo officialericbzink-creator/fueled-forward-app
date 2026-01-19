@@ -1,17 +1,22 @@
 import { TextStyle, ViewStyle } from "react-native"
 import { BottomTabScreenProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { CompositeScreenProps } from "@react-navigation/native"
+import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
+import { CustomTabBar } from "@/components/CustomTabBar"
 import { AppStackParamList, AppStackScreenProps } from "@/navigators/AppNavigator"
+import { ResourcesNavigator, ResourcesNavigatorParamList } from "@/navigators/ResourcesNavigator"
 import { HomeScreen } from "@/screens/HomeScreen"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { CheckInProvider } from "@/context/CheckInContext"
+import { HomeCheckInNavigator } from "./CheckInNavigator"
+import { AIChatScreen } from "@/screens/ChatScreen"
 
 export type AuthNavigatorParamList = {
   Home: undefined
-  Resources: undefined
-  AiChat: undefined
+  // AIChat: undefined
+  Resources: NavigatorScreenParams<ResourcesNavigatorParamList>
 }
 
 export type AuthTabScreenProps<T extends keyof AuthNavigatorParamList> = CompositeScreenProps<
@@ -27,19 +32,33 @@ export const AuthNavigator = () => {
     theme: { colors },
   } = useAppTheme()
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarHideOnKeyboard: true,
-        tabBarStyle: themed([$tabBar, { height: bottom + 70 }]),
-        tabBarActiveTintColor: colors.text,
-        tabBarInactiveTintColor: colors.text,
-        tabBarLabelStyle: themed($tabBarLabel),
-        tabBarItemStyle: themed($tabBarItem),
-      }}
-    >
-      <Tab.Screen name={"Home"} component={HomeScreen} />
-    </Tab.Navigator>
+    <CheckInProvider>
+      <Tab.Navigator
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          tabBarHideOnKeyboard: true,
+          tabBarStyle: themed([$tabBar, { height: bottom + 70 }]),
+          tabBarActiveTintColor: colors.text,
+          tabBarInactiveTintColor: colors.text,
+          tabBarLabelStyle: themed($tabBarLabel),
+          tabBarItemStyle: themed($tabBarItem),
+          sceneStyle: {
+            backgroundColor: colors.palette.primary100,
+          },
+        }}
+      >
+        <Tab.Screen name={"Home"} component={HomeCheckInNavigator} />
+        {/*<Tab.Screen
+          name={"AIChat"}
+          component={AIChatScreen}
+          options={{
+            tabBarStyle: { display: "none" }, // Hide tab bar on this screen only
+          }}
+        />*/}
+        <Tab.Screen name={"Resources"} component={ResourcesNavigator} />
+      </Tab.Navigator>
+    </CheckInProvider>
   )
 }
 

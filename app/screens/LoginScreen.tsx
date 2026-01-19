@@ -1,5 +1,5 @@
 import { ComponentType, FC, useMemo, useRef, useState } from "react"
-import { Pressable, TextInput, View, ViewStyle } from "react-native"
+import { Linking, Pressable, TextInput, View, ViewStyle } from "react-native"
 import { Link, useNavigation } from "@react-navigation/native"
 
 import { Button } from "@/components/Button"
@@ -14,11 +14,13 @@ import { ThemedStyle } from "@/theme/types"
 import { authClient } from "../../lib/auth"
 import Toast from "react-native-toast-message"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { useHeader } from "@/utils/useHeader"
+import Config from "@/config"
 // import { useNavigation } from "@react-navigation/native"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
-export const LoginScreen: FC<LoginScreenProps> = () => {
+export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const authPasswordInput = useRef<TextInput>(null)
 
   const [authEmail, setAuthEmail] = useState("richardsprins@gmail.com")
@@ -27,8 +29,6 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(0)
   const { data: session } = authClient.useSession()
-  // Pull in navigation via hook
-  const navigation = useNavigation()
 
   const $topContainerInsets = useSafeAreaInsetsStyle(["top"])
 
@@ -37,33 +37,48 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
     theme: { colors },
   } = useAppTheme()
 
+  useHeader({
+    leftIcon: "back",
+    onLeftPress: () => navigation.goBack(),
+    titleTx: "auth:signIn.title",
+  })
+
   const login = async () => {
     setIsSubmitted(true)
     setAttemptsCount(attemptsCount + 1)
 
-    if (!authEmail || authEmail.length === 0) return
-    if (authEmail.length < 6) return
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail)) return
-
-    if (!authPassword || authPassword.length === 0) return
-    if (authPassword.length < 6) return
-
     try {
+      if (!authEmail || authEmail.length === 0) return
+      if (authEmail.length < 6) return
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail)) return
+
+      if (!authPassword || authPassword.length === 0) return
+      if (authPassword.length < 6) return
       const response = await authClient.signIn.email({
         email: authEmail,
         password: authPassword,
       })
       if (response.data) {
         // On successful login, navigate to the Welcome screen
-        console.log(response.data)
+        console.log("Login Data: ", response.data)
       } else {
         // Handle login failure (e.g., show an error message)
-        console.error("Login failed:", response.error)
-        Toast.show({
-          type: "error",
-          text1: "Login Failed",
-          text2: response.error?.message || "An error occurred during login.",
-        })
+        //
+        if (response.error.code === "EMAIL_NOT_VERIFIED") {
+          Toast.show({
+            type: "info",
+            text1: "Email Not Verified",
+            text2: "Please verify your email before logging in.",
+          })
+          navigation.navigate("EmailVerification", { email: authEmail })
+        } else {
+          console.error("Login failed:", response.error)
+          Toast.show({
+            type: "error",
+            text1: "Login Failed",
+            text2: response.error?.message || "An error occurred during login.",
+          })
+        }
       }
     } catch (error) {
       console.error("An error occurred during login:", error)
@@ -72,6 +87,8 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
         text1: "Login Error",
         text2: (error as Error).message || "An unexpected error occurred.",
       })
+    } finally {
+      setIsSubmitted(false)
     }
   }
 
@@ -135,6 +152,15 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
           <Text style={{ textDecorationLine: "underline" }} tx={"auth:signIn.signUpButton"} />
         </Pressable>
       </View>
+      <View style={themed($signUpContainer)}>
+        <Pressable onPress={() => Linking.openURL(Config.PASSWORD_RESET_URL)}>
+          <Text
+            size="xxs"
+            style={{ textDecorationLine: "underline" }}
+            tx={"auth:signIn.forgotPassword"}
+          />
+        </Pressable>
+      </View>
       <Button
         testID="login-button"
         tx="auth:signIn.submitButton"
@@ -164,5 +190,5 @@ const $signUpContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   alignItems: "center",
   // justifyContent: "center",
   gap: spacing.sm,
-  marginBottom: spacing.lg,
+  marginBottom: spacing.md,
 })

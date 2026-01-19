@@ -1,46 +1,31 @@
-/**
- * This Api class lets you define an API endpoint and methods to request
- * data and process it.
- *
- * See the [Backend API Integration](https://docs.infinite.red/ignite-cli/boilerplate/app/services/#backend-api-integration)
- * documentation for more details.
- */
-import { ApisauceInstance, create } from "apisauce"
-
 import Config from "@/config"
 
-import type { ApiConfig } from "./types"
+import { ChatApi } from "./chat-api"
+import { CheckInApi } from "./check-in-api"
+import { GoalsApi } from "./goals-api"
+import { OnboardingApi } from "./onboarding-api"
+import { ProfileApi } from "./profile-api"
+import { ResourcesApi } from "./resources-api"
 
-/**
- * Configuring the apisauce instance.
- */
-export const DEFAULT_API_CONFIG: ApiConfig = {
+const DEFAULT_API_CONFIG = {
   url: Config.API_URL,
   timeout: 10000,
 }
 
-/**
- * Manages all requests to the API. You can use this class to build out
- * various requests that you need to call from your backend API.
- */
-export class Api {
-  apisauce: ApisauceInstance
-  config: ApiConfig
-
-  /**
-   * Set up our API instance. Keep this lightweight!
-   */
-  constructor(config: ApiConfig = DEFAULT_API_CONFIG) {
-    this.config = config
-    this.apisauce = create({
-      baseURL: this.config.url,
-      timeout: this.config.timeout,
-      headers: {
-        Accept: "application/json",
-      },
-    })
-  }
+const CMS_API_CONFIG = {
+  url: Config.STRAPI_URL,
+  timeout: 10000,
 }
 
-// Singleton instance of the API for convenience
-export const api = new Api()
+// Main backend API instances
+export const profileApi = new ProfileApi(DEFAULT_API_CONFIG)
+export const checkInApi = new CheckInApi(DEFAULT_API_CONFIG)
+export const goalsApi = new GoalsApi(DEFAULT_API_CONFIG)
+export const onboardingApi = new OnboardingApi(DEFAULT_API_CONFIG)
+export const chatApi = new ChatApi(DEFAULT_API_CONFIG)
+
+// CMS (Strapi) API instances
+export const resourcesApi = new ResourcesApi(CMS_API_CONFIG, Config.STRAPI_TOKEN)
+
+// Re-export types
+export * from "./types"

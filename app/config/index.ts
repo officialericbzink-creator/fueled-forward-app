@@ -15,12 +15,13 @@
  */
 import BaseConfig from "./config.base"
 import DevConfig from "./config.dev"
+import EnvConfig from "./config.env"
 import ProdConfig from "./config.prod"
 
-let ExtraConfig = ProdConfig
+let ExtraConfig = { ...ProdConfig, ...EnvConfig }
 
 if (__DEV__) {
-  ExtraConfig = DevConfig
+  ExtraConfig = { ...DevConfig, ...EnvConfig }
 }
 
 const Config = { ...BaseConfig, ...ExtraConfig }

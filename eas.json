@@ -26,7 +26,7 @@
       "extends": "production",
       "distribution": "internal",
       "ios": { "simulator": true },
-      "android": { "buildType": "apk" }
+      "android": { "buildType": "app-bundle" }
     },
     "preview:device": {
       "extends": "preview",
@@ -35,6 +35,23 @@
     "production": {}
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "production"
+      },
+      "ios": {
+        "appleId": "eric.zink@gmail.com",
+        "ascAppId": "6757867912"
+      }
+    },
+    "preview": {
+      "android": {
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "eric.zink@gmail.com",
+        "ascAppId": "6757867912"
+      }
+    }
   }
 }

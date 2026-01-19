@@ -86,7 +86,8 @@ export const ThemeProvider: FC<PropsWithChildren<ThemeProviderProps>> = ({
   const navigationTheme: NavTheme = useMemo(() => {
     switch (themeContext) {
       case "dark":
-        return NavDarkTheme
+        // return
+        return NavDefaultTheme
       default:
         return NavDefaultTheme
     }
@@ -95,7 +96,8 @@ export const ThemeProvider: FC<PropsWithChildren<ThemeProviderProps>> = ({
   const theme: Theme = useMemo(() => {
     switch (themeContext) {
       case "dark":
-        return darkTheme
+        // return darkTheme
+        return lightTheme
       default:
         return lightTheme
     }

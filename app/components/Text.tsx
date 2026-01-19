@@ -47,6 +47,9 @@ export interface TextProps extends RNTextProps {
    * Children components.
    */
   children?: ReactNode
+
+  /** If true, centers the text. */
+  centered?: boolean
 }
 
 /**
@@ -57,7 +60,17 @@ export interface TextProps extends RNTextProps {
  * @returns {JSX.Element} The rendered `Text` component.
  */
 export const Text = forwardRef(function Text(props: TextProps, ref: ForwardedRef<RNText>) {
-  const { weight, size, tx, txOptions, text, children, style: $styleOverride, ...rest } = props
+  const {
+    weight,
+    size,
+    tx,
+    txOptions,
+    text,
+    children,
+    centered,
+    style: $styleOverride,
+    ...rest
+  } = props
   const { themed } = useAppTheme()
 
   const i18nText = tx && translate(tx, txOptions)
@@ -70,6 +83,7 @@ export const Text = forwardRef(function Text(props: TextProps, ref: ForwardedRef
     weight && $fontWeightStyles[weight],
     size && $sizeStyles[size],
     $styleOverride,
+    centered && { textAlign: "center" },
   ]
 
   return (

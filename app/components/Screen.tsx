@@ -258,7 +258,7 @@ export function Screen(props: ScreenProps) {
     <View
       style={[
         $containerStyle,
-        { backgroundColor: backgroundColor || colors.background },
+        { backgroundColor: backgroundColor || colors.palette.primary100 },
         $containerInsets,
       ]}
     >
