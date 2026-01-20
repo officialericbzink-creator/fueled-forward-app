@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.0.2",
   "orientation": "portrait",
   "userInterfaceStyle": "automatic",
   "icon": "./assets/images/ff-icon-1024.png",
@@ -9,9 +9,7 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": [
-    "**/*"
-  ],
+  "assetBundlePatterns": ["**/*"],
   "android": {
     "icon": "./assets/images/ff-icon-1024.png",
     "adaptiveIcon": {
@@ -21,9 +19,7 @@
     "allowBackup": false,
     "edgeToEdgeEnabled": true,
     "package": "com.fueledforwardapp",
-    "permissions": [
-      "android.permission.RECORD_AUDIO"
-    ]
+    "permissions": ["android.permission.RECORD_AUDIO"]
   },
   "ios": {
     "icon": "./assets/images/ff-icon-1024.png",
@@ -33,15 +29,11 @@
       "NSPrivacyAccessedAPITypes": [
         {
           "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "CA92.1"
-          ]
+          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
         },
         {
           "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "CA92.1"
-          ]
+          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
         }
       ]
     },

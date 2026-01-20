@@ -42,7 +42,7 @@ export const Step0Name: FC<Step0NameProps> = ({ onDataChange, onValidationChange
         <TextField
           value={name}
           onChangeText={setName}
-          placeholder="Enter your preferredT name"
+          placeholder="Enter your preferred name"
           autoFocus
           returnKeyType="done"
           style={themed($input)}
