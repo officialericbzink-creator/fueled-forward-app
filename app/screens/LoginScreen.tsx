@@ -23,11 +23,11 @@ interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const authPasswordInput = useRef<TextInput>(null)
 
-  const [authEmail, setAuthEmail] = useState("richardsprins@gmail.com")
-  const [authPassword, setAuthPassword] = useState("test1234")
+  const [authEmail, setAuthEmail] = useState("")
+  const [authPassword, setAuthPassword] = useState("")
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [attemptsCount, setAttemptsCount] = useState(0)
+  // const [attemptsCount, setAttemptsCount] = useState(0)
   const { data: session } = authClient.useSession()
 
   const $topContainerInsets = useSafeAreaInsetsStyle(["top"])
@@ -45,7 +45,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
 
   const login = async () => {
     setIsSubmitted(true)
-    setAttemptsCount(attemptsCount + 1)
+    // setAttemptsCount(attemptsCount + 1)
 
     try {
       if (!authEmail || authEmail.length === 0) return

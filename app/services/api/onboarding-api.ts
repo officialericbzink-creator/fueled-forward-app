@@ -14,6 +14,7 @@ export class OnboardingApi extends BaseApi {
     step: number,
     stepData: OnboardingStepData,
   ): Promise<OnboardingStepResponse> {
+    console.log(stepData)
     const response = await this.apisauce.post(`/profile/onboarding/${step}`, stepData)
     if (!response.ok) {
       throw new Error(response.data?.message || `Failed to submit step ${step}`)

@@ -13,7 +13,7 @@ import { ThemedStyle } from "@/theme/types"
 import { useAppTheme } from "@/theme/context"
 
 interface Step0NameProps {
-  onDataChange: (name: string) => void
+  onDataChange: ({ name }: { name: string }) => void
   onValidationChange: (isValid: boolean) => void
 }
 
@@ -23,7 +23,7 @@ export const Step0Name: FC<Step0NameProps> = ({ onDataChange, onValidationChange
   const [showInput, setShowInput] = useState(false)
 
   useEffect(() => {
-    onDataChange(name)
+    onDataChange({ name })
     onValidationChange(name.trim().length > 0)
   }, [name])
 

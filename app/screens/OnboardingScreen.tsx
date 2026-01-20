@@ -44,6 +44,12 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
   const completeOnboarding = useCompleteOnboarding()
   const { refetch } = useAuth()
 
+  useEffect(() => {
+    if (onboardingStatus) {
+      console.log("Raw onboarding status:", JSON.stringify(onboardingStatus, null, 2))
+    }
+  }, [onboardingStatus])
+
   const [currentStep, setCurrentStep] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [stepData, setStepData] = useState<any>(null)
@@ -133,14 +139,10 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
     try {
       const submittingStep = currentStep
 
-      console.log("Submitting step:", { step: submittingStep, data: stepData })
-
       const result = await submitStep.mutateAsync({
         step: submittingStep,
         data: stepData,
       })
-
-      console.log("Step submission result:", result)
 
       // Check if we just submitted the last step (step 4)
       if (submittingStep === 4) {

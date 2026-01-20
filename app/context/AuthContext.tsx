@@ -1,7 +1,8 @@
 import { createContext, FC, PropsWithChildren, useContext, useCallback, useEffect } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { SessionQueryParams } from "better-auth/types"
 
 import { authClient } from "../../lib/auth"
-import { SessionQueryParams } from "better-auth/types"
 
 export type AuthContextType = {
   // Session data
@@ -34,35 +35,40 @@ export const AuthContext = createContext<AuthContextType | null>(null)
 export interface AuthProviderProps {}
 
 export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ children }) => {
+  const queryClient = useQueryClient()
   // Get session from Better Auth with loading states
   const { data: session, isPending, error, refetch, isRefetching } = authClient.useSession()
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    try {
-      const result = await authClient.signIn.email({
-        email,
-        password,
-      })
-
-      return {
-        data: result.data,
-        error: result.error ? { message: result.error.message || "Sign in failed" } : undefined,
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const result = await authClient.signIn.email({
+          email,
+          password,
+        })
+        queryClient.removeQueries({ queryKey: ["onboarding"] })
+        return {
+          data: result.data,
+          error: result.error ? { message: result.error.message || "Sign in failed" } : undefined,
+        }
+      } catch (err) {
+        return {
+          error: { message: err instanceof Error ? err.message : "An unexpected error occurred" },
+        }
       }
-    } catch (err) {
-      return {
-        error: { message: err instanceof Error ? err.message : "An unexpected error occurred" },
-      }
-    }
-  }, [])
+    },
+    [queryClient],
+  )
 
   const signOut = useCallback(async () => {
     // console.log("Signing out user...")
     try {
       await authClient.signOut()
+      queryClient.clear()
     } catch (err) {
       console.error("Error signing out:", err)
     }
-  }, [])
+  }, [queryClient])
 
   const value: AuthContextType = {
     session: session ?? null,

@@ -9,7 +9,6 @@ export const useSubmitOnboardingStep = () => {
 
   return useMutation({
     mutationFn: ({ step, data }: { step: number; data: OnboardingStepData }) => {
-      console.log("Submitting step:", { step, data })
       return onboardingApi.submitOnboardingStep(step, data)
     },
     // onSuccess: () => {

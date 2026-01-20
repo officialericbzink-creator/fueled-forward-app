@@ -8,7 +8,7 @@ import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 
 interface Step1StrugglesProps {
-  onDataChange: (struggles: string[]) => void
+  onDataChange: (struggles: { struggles: string[] }) => void
   onValidationChange: (isValid: boolean) => void
 }
 
@@ -30,7 +30,7 @@ export const Step1Struggles: FC<Step1StrugglesProps> = ({ onDataChange, onValida
   const [showOptions, setShowOptions] = useState(false)
 
   useEffect(() => {
-    onDataChange(selectedStruggles)
+    onDataChange({ struggles: selectedStruggles })
     onValidationChange(selectedStruggles.length > 0)
   }, [selectedStruggles])
 
