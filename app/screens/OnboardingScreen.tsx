@@ -205,7 +205,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
       <Screen
         contentContainerStyle={{ flex: 1 }}
         style={themed($root)}
-        preset="fixed"
+        preset="auto"
         safeAreaEdges={["bottom"]}
       >
         <View style={themed($loadingContainer)}>
@@ -276,7 +276,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
     <Screen
       contentContainerStyle={{ flex: 1 }}
       style={themed($root)}
-      preset="fixed"
+      preset="auto"
       safeAreaEdges={["bottom"]}
     >
       <Animated.View style={[themed($contentContainer), contentAnimatedStyle]}>

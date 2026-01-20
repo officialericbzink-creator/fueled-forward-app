@@ -156,7 +156,7 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <Screen style={themed($root)} preset="fixed">
+    <Screen style={themed($root)} preset="auto">
       <Card
         style={{
           padding: spacing.md,
