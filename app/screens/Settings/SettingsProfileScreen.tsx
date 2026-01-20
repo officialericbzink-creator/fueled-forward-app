@@ -1,5 +1,14 @@
-import { FC, useEffect, useReducer, useState } from "react"
-import { Alert, Image, Pressable, TextStyle, View, ViewStyle } from "react-native"
+import { FC, useCallback, useEffect, useReducer, useState } from "react"
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native"
+import * as ImagePicker from "expo-image-picker"
 import Toast from "react-native-toast-message"
 
 import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
@@ -20,11 +29,8 @@ import {
 import { Button } from "@/components/Button"
 import { useUpdateProfile } from "@/hooks/profile/update-profile"
 import { useUploadAvatar } from "@/hooks/profile/upload-avatar"
-import { STRUGGLE_OPTIONS } from "@/utils/constants"
+import { STRUGGLE_OPTIONS, DEFAULT_AVATAR } from "@/utils/constants"
 // import { useNavigation } from "@react-navigation/native"
-
-const DEFAULT_AVATAR = require("../../../assets/images/default-avatar.png")
-
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsProfile"> {}
 
 export const SettingsProfileScreen: FC<SettingsMenuScreenProps> = ({ navigation }) => {
@@ -32,18 +38,60 @@ export const SettingsProfileScreen: FC<SettingsMenuScreenProps> = ({ navigation 
   const { data } = useGetProfile(user?.id || "")
 
   const [formState, dispatch] = useReducer(profileFormReducer, initialFormState)
-  const [imageAsset, setImageAsset] = useState(null)
+
+  const selectImage = async () => {
+    // No permissions request is necessary for launching the image library.
+    // Manually request permissions for videos on iOS when `allowsEditing` is set to `false`
+    // and `videoExportPreset` is `'Passthrough'` (the default), ideally before launching the picker
+    // so the app users aren't surprised by a system dialog after picking a video.
+    // See "Invoke permissions for videos" sub section for more details.
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
+
+    if (!permissionResult.granted) {
+      Alert.alert("Permission required", "Permission to access the media library is required.")
+      return
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      base64: false,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    })
+
+    if (result) {
+      // try uploading to media service
+      const asset = result.assets?.[0]
+      if (!asset?.uri) {
+        throw new Error("No image selected")
+      }
+
+      const formData = new FormData()
+
+      const uriParts = asset.uri.split(".")
+      const fileExtension = uriParts[uriParts.length - 1]
+      const mimeType = asset.mimeType || `image/${fileExtension}`
+
+      formData.append("file", {
+        uri: asset.uri,
+        type: mimeType,
+        name: `${Date.now()}.${fileExtension}`,
+      } as any)
+
+      const response = await uploadAvatar(formData)
+      console.log(response)
+    }
+  }
 
   const { mutate: updateProfile, isPending } = useUpdateProfile()
-  const { isPending: avatarPending, mutate: uploadAvatar } = useUploadAvatar()
+  const { isPending: avatarPending, mutateAsync: uploadAvatar } = useUploadAvatar()
 
   useEffect(() => {
     if (data) {
       dispatch({ type: ProfileFormActionType.SET_INITIAL_DATA, payload: data })
     }
   }, [data])
-
-  const handleAvatarChange = () => {}
 
   const handleGoBack = () => {
     if (formState.isDirty) {
@@ -128,11 +176,25 @@ export const SettingsProfileScreen: FC<SettingsMenuScreenProps> = ({ navigation 
         style={{ marginVertical: spacing.lg, gap: spacing.lg, alignItems: "center", width: "100%" }}
       >
         <View style={{ alignItems: "center", gap: spacing.sm }}>
-          <Pressable>
-            <Image
-              source={user?.image ? { uri: user.image } : DEFAULT_AVATAR}
-              style={{ height: 150, width: 150, borderRadius: 75 }}
-            />
+          <Pressable onPress={selectImage}>
+            {avatarPending ? (
+              <View
+                style={{
+                  height: 150,
+                  width: 150,
+                  borderRadius: 75,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ActivityIndicator />
+              </View>
+            ) : (
+              <Image
+                source={data?.image ? { uri: data.image } : DEFAULT_AVATAR}
+                style={{ height: 150, width: 150, borderRadius: 75 }}
+              />
+            )}
           </Pressable>
           <Text text="Change Profile Image" size="xs" centered />
         </View>

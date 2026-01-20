@@ -9,9 +9,9 @@ export const useUploadAvatar = () => {
     mutationFn: async (avatarData: FormData) => {
       return profileApi.uploadAvatar(avatarData)
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log("Avatar uploaded successfully:", data)
-      queryClient.invalidateQueries({ queryKey: ["profile"] })
+      await queryClient.invalidateQueries({ queryKey: ["profile"] })
     },
     onError: (error: any) => {
       console.error("Error uploading avatar:", error.message)

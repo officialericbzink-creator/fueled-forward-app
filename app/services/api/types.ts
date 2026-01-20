@@ -239,3 +239,13 @@ export interface StrapiResponse<T> {
   data: T
   meta: StrapiMeta
 }
+
+export interface ImageUploadResult {
+  success: boolean
+  data: {
+    key: string
+    url: string
+    type: "AVATAR"
+    userId: string
+  }
+}

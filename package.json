@@ -61,6 +61,7 @@
     "expo-secure-store": "~14.2.4",
     "expo-splash-screen": "~0.30.9",
     "expo-system-ui": "~5.0.9",
+    "expo-updates": "~0.28.17",
     "expo-web-browser": "~14.2.0",
     "i18next": "25.4.2",
     "iconoir-react-native": "^7.11.0",

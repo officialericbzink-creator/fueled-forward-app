@@ -1,4 +1,4 @@
-import { FC, useMemo, useState } from "react"
+import { FC, useCallback, useMemo, useState } from "react"
 import {
   Image,
   Modal,
@@ -17,6 +17,7 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Checkbox } from "@/components/Toggle/Checkbox"
 import { useAuth } from "@/context/AuthContext"
+import { useSubscription } from "@/context/InAppSubscriptionContext"
 import { useGetCheckInHistory } from "@/hooks/check-in/get-check-ins"
 import { useGetTodaysCheckIn } from "@/hooks/check-in/get-today-check-in"
 import { useDailyGoalsActions } from "@/hooks/goals/daily-goal-actions"
@@ -28,7 +29,7 @@ import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
 import { CheckInDetails } from "@/services/api/types"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { MOOD_IMAGES } from "@/utils/constants"
+import { DEFAULT_AVATAR, MOOD_IMAGES } from "@/utils/constants"
 import { useHeader } from "@/utils/useHeader"
 
 interface HomeScreenProps extends HomeCheckInStackScreenProps<"HomeDashboard"> {}
@@ -36,6 +37,7 @@ interface HomeScreenProps extends HomeCheckInStackScreenProps<"HomeDashboard"> {
 export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   const { user } = useAuth()
   const { data: profile, isLoading: profileLoading } = useGetProfile(user?.id || "")
+  const { checkForActiveSubscription, isInitialized, subscriptionDataLoaded } = useSubscription()
 
   const [goalModalOpen, setGoalModalOpen] = useState(false)
   const [goalText, setGoalText] = useState("")
@@ -46,17 +48,10 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   } = useAppTheme()
 
   useHeader({
-    LeftActionComponent: profile?.image ? (
+    LeftActionComponent: (
       <Image
-        source={{ uri: profile.image }}
+        source={profile?.image ? { uri: profile.image } : DEFAULT_AVATAR}
         style={{ height: 45, width: 45, marginLeft: spacing.md, borderRadius: 22.5 }}
-      />
-    ) : (
-      <User
-        color={colors.palette.primary900}
-        width={40}
-        height={40}
-        style={{ marginLeft: spacing.md }}
       />
     ),
     rightIcon: "settings",
@@ -84,9 +79,23 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
     [recommendationsData?.data],
   )
 
-  const isLoading = checkInHistoryLoading || todaysCheckInLoading || goalsLoading || profileLoading
+  const isLoading =
+    checkInHistoryLoading ||
+    todaysCheckInLoading ||
+    goalsLoading ||
+    profileLoading ||
+    !isInitialized ||
+    !subscriptionDataLoaded
 
   const handleToggleGoalComplete = (goalId: string) => toggleGoal.mutate(goalId)
+
+  const handleOpenGoalModal = useCallback(() => {
+    if (checkForActiveSubscription()) {
+      setGoalModalOpen(true)
+    } else {
+      navigation.navigate("SettingsMain", { screen: "SettingsSubscription" })
+    }
+  }, [checkForActiveSubscription, navigation])
 
   const handleSubmitGoal = () => {
     if (goalText.trim()) {
@@ -168,6 +177,14 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
     )
   }
 
+  const handleNavigateToCheckIn = useCallback(() => {
+    if (checkForActiveSubscription()) {
+      navigation.navigate("CheckIn")
+    } else {
+      navigation.navigate("SettingsMain", { screen: "SettingsSubscription" })
+    }
+  }, [checkForActiveSubscription, navigation])
+
   const renderDailyCheckInStatus = () => {
     if (todaysCheckInError) return <Text size="xs" tx="home:checkInCard.errorText" />
 
@@ -184,7 +201,7 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
       <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
         <Text centered size="xxs" tx="home:checkInCard.buttonCaption"></Text>
         <Button
-          onPress={() => navigation.navigate("CheckIn")}
+          onPress={handleNavigateToCheckIn}
           preset="reversed"
           tx="home:checkInCard.checkInButtonText"
         />
@@ -321,7 +338,7 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
                   LeftAccessory={() => (
                     <Plus color={colors.palette.primary900} width={20} height={20} />
                   )}
-                  onPress={() => setGoalModalOpen(true)}
+                  onPress={handleOpenGoalModal}
                   tx="home:goalsCard.headerButtonText"
                 ></Button>
               }
@@ -347,7 +364,7 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
             />
           ) : goals.length === 0 ? (
             <Button
-              onPress={() => setGoalModalOpen(true)}
+              onPress={handleOpenGoalModal}
               LeftAccessory={() => (
                 <Plus color={colors.palette.primary900} width={24} height={24} />
               )}

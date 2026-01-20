@@ -1,5 +1,5 @@
 // screens/OnboardingScreen.tsx
-import { FC, useEffect, useState, useRef } from "react"
+import { FC, useEffect, useState, useRef, useCallback } from "react"
 import { ViewStyle, View, ActivityIndicator } from "react-native"
 import Animated, {
   useAnimatedStyle,
@@ -67,17 +67,13 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
     }
   }, [onboardingStatus?.currentStep])
 
-  useEffect(() => {
-    console.log("Query State:", {
-      isLoading: isLoadingStatus,
-      isError: isStatusError,
-      error: statusError,
-      data: onboardingStatus,
-      currentStep,
-      maxBackendStep: maxBackendStepRef.current,
-      isCompleting,
-    })
-  }, [isLoadingStatus, isStatusError, statusError, onboardingStatus, currentStep, isCompleting])
+  const handleDataChange = useCallback((data: any) => {
+    setStepData(data)
+  }, [])
+
+  const handleValidationChange = useCallback((isValid: boolean) => {
+    setIsStepValid(isValid)
+  }, [])
 
   useEffect(() => {
     if (onboardingStatus?.completedOnboarding && !hasNavigatedRef.current) {
@@ -146,8 +142,8 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
 
       console.log("Step submission result:", result)
 
-      // Check if we just submitted the last step (step 5)
-      if (submittingStep === 5) {
+      // Check if we just submitted the last step (step 4)
+      if (submittingStep === 4) {
         console.log("Completing onboarding process")
         setIsCompleting(true)
 
@@ -225,45 +221,45 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
       case 0:
         return (
           <Step0Name
-            onDataChange={(name) => setStepData({ name })}
-            onValidationChange={setIsStepValid}
+            onDataChange={handleDataChange} // ← Use memoized callback
+            onValidationChange={handleValidationChange}
           />
         )
       case 1:
         return (
           <Step1Struggles
-            onDataChange={(struggles) => setStepData({ struggles })}
-            onValidationChange={setIsStepValid}
+            onDataChange={handleDataChange}
+            onValidationChange={handleValidationChange}
           />
         )
       case 2:
         return (
           <Step2ImportantDate
-            onDataChange={(data) => setStepData(data)}
-            onValidationChange={setIsStepValid}
+            onDataChange={handleDataChange}
+            onValidationChange={handleValidationChange}
           />
         )
       case 3:
         return (
           <Step3Therapy
-            onDataChange={(data) => setStepData(data)}
-            onValidationChange={setIsStepValid}
+            onDataChange={handleDataChange}
+            onValidationChange={handleValidationChange}
           />
         )
       case 4:
         return (
           <OnboardingPaywallStep
-            onDataChange={(data) => setStepData(data)}
-            onValidationChange={setIsStepValid}
+            onDataChange={handleDataChange} // ← Use memoized callback
+            onValidationChange={handleValidationChange}
           />
         )
-      case 5:
-        return (
-          <Step5Biometric
-            onDataChange={(data) => setStepData(data)}
-            onValidationChange={setIsStepValid}
-          />
-        )
+      // case 5:
+      //   return (
+      //     <Step5Biometric
+      //       onDataChange={handleDataChange}
+      //       onValidationChange={handleValidationChange}
+      //     />
+      //   )
       default:
         return (
           <View style={themed($loadingContainer)}>

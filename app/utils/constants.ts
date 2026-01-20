@@ -236,3 +236,5 @@ export const STRUGGLE_OPTIONS = [
   "Sleep Problems",
   "Other",
 ] as const
+
+export const DEFAULT_AVATAR = require("../../assets/images/default-avatar.png")

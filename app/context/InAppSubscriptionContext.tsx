@@ -42,6 +42,8 @@ export type InAppSubscriptionContextType = {
   refreshSubscriptionStatus: () => Promise<void>
   availablePackages: OfferingPackage[] // NEW
   isLoadingOfferings: boolean
+  checkForActiveSubscription: () => boolean
+  subscriptionDataLoaded: boolean
 }
 
 export interface OfferingPackage {
@@ -79,15 +81,16 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
     expirationDate: null,
     isSubscribed: false,
   })
+  const [subscriptionDataLoaded, setSubscriptionDataLoaded] = useState(false)
 
   // Initialize RevenueCat SDK
   useEffect(() => {
     const initializeRevenueCat = async () => {
-      // Only initialize if user is authenticated and we haven't initialized yet
       if (!isAuthenticated || !user?.id || isInitialized) {
         setIsLoading(false)
         return
       }
+
       if (!__DEV__ && process.env.EXPO_PUBLIC_USE_TEST_STORE === "true") {
         console.error("🚨 CRITICAL: Test Store is being used in production build!")
         console.error("🚨 This will cause app rejection. Update environment variables.")
@@ -147,20 +150,33 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
         console.log("✅ RevenueCat initialized successfully")
         setIsInitialized(true)
+        console.log("✅ RevenueCat initialized successfully")
+        setIsInitialized(true)
 
-        // Fetch initial subscription status
-        await fetchSubscriptionStatus()
+        // Fetch initial subscription status DIRECTLY
+        try {
+          setIsLoading(true)
+          const customerInfo: CustomerInfo = await Purchases.getCustomerInfo()
+          const parsedData = parseCustomerInfo(customerInfo)
+          setSubscriptionData(parsedData)
+          setSubscriptionDataLoaded(true)
+          console.log("✅ Subscription status updated:", parsedData)
+        } catch (err) {
+          console.error("❌ Failed to fetch subscription status:", err)
+          setError(err instanceof Error ? err : new Error("Failed to fetch status"))
+          setSubscriptionDataLoaded(true)
+        } finally {
+          setIsLoading(false)
+        }
       } catch (err) {
         console.error("❌ Failed to initialize RevenueCat:", err)
         setError(err instanceof Error ? err : new Error("Unknown initialization error"))
-      } finally {
-        setIsLoading(false)
+        setIsLoading(false) // ← Make sure to set loading false on error too
       }
     }
 
     initializeRevenueCat()
   }, [isAuthenticated, user?.id, isInitialized])
-
   const parseCustomerInfo = (customerInfo: CustomerInfo): SubscriptionData => {
     // Check if user has any active entitlements
     const entitlements = customerInfo.entitlements.active
@@ -251,21 +267,14 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
     try {
       setIsLoading(true)
-      console.log("📊 Fetching subscription status...")
-
-      // REAL RC CALL
       const customerInfo: CustomerInfo = await Purchases.getCustomerInfo()
-
-      console.log("📦 CustomerInfo:", JSON.stringify(customerInfo, null, 2))
-
-      // Parse subscription data from customerInfo
       const parsedData = parseCustomerInfo(customerInfo)
-
       setSubscriptionData(parsedData)
-      console.log("✅ Subscription status updated:", parsedData)
+      setSubscriptionDataLoaded(true) // ← Add this
     } catch (err) {
       console.error("❌ Failed to fetch subscription status:", err)
       setError(err instanceof Error ? err : new Error("Failed to fetch status"))
+      setSubscriptionDataLoaded(true) // ← Add this even on error
     } finally {
       setIsLoading(false)
     }
@@ -446,6 +455,11 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
     await fetchSubscriptionStatus()
   }, [fetchSubscriptionStatus])
 
+  const checkForActiveSubscription = useCallback(() => {
+    // Only return true if we've loaded subscription data AND user is subscribed
+    return subscriptionDataLoaded && subscriptionData.isSubscribed
+  }, [subscriptionData.isSubscribed, subscriptionDataLoaded])
+
   const value: InAppSubscriptionContextType = {
     subscriptionData,
     isLoading,
@@ -456,7 +470,9 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
     manageSubscription,
     refreshSubscriptionStatus,
     isLoadingOfferings,
+    checkForActiveSubscription,
     availablePackages,
+    subscriptionDataLoaded,
   }
 
   return (

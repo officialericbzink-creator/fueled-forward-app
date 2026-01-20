@@ -1,5 +1,5 @@
 import { BaseApi } from "./base-api"
-import type { UserWithProfile, UpdateProfileData } from "./types"
+import type { UserWithProfile, UpdateProfileData, ImageUploadResult } from "./types"
 
 export class ProfileApi extends BaseApi {
   async getProfile(): Promise<UserWithProfile> {
@@ -18,7 +18,7 @@ export class ProfileApi extends BaseApi {
     return response.data as { success: boolean }
   }
 
-  async uploadAvatar(avatarData: FormData) {
+  async uploadAvatar(avatarData: FormData): Promise<ImageUploadResult> {
     const response = await this.apisauce.post("/profile/avatar", avatarData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -27,6 +27,6 @@ export class ProfileApi extends BaseApi {
     if (!response.ok) {
       throw new Error(response.data?.message || "Failed to upload avatar")
     }
-    return response.data
+    return response.data as ImageUploadResult
   }
 }

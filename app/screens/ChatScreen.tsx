@@ -13,6 +13,7 @@ import { ThemedStyle } from "@/theme/types"
 import { useSocket } from "@/context/AIChatContext"
 import Animated from "react-native-reanimated"
 import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
+import { ChatMessage } from "@/services/api"
 // import * as Notifications from "expo-notifications"
 
 interface AIChatScreenProps extends AppStackScreenProps<"AIChat"> {}
@@ -20,7 +21,7 @@ interface AIChatScreenProps extends AppStackScreenProps<"AIChat"> {}
 export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const { session } = useAuth()
   const { socket, connected, markAsRead } = useSocket()
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollViewRef = useRef<ScrollView>(null)
@@ -145,7 +146,13 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <Screen contentContainerStyle={{ flex: 1 }} safeAreaEdges={["bottom"]} preset="fixed">
+    <Screen
+      contentContainerStyle={{ flex: 1 }}
+      safeAreaEdges={["bottom"]}
+      preset="auto"
+      // keyboardShouldPersistTaps="handled"
+      keyboardBottomOffset={0}
+    >
       <View style={{ flex: 1 }}>
         <ScrollView
           ref={scrollViewRef}

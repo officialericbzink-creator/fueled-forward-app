@@ -1,19 +1,27 @@
-import React from "react"
+import React, { useCallback } from "react"
 import { View, TouchableOpacity, StyleSheet, Dimensions, ViewStyle } from "react-native"
 import { HomeSimple, OpenBook, ChatLinesSolid } from "iconoir-react-native"
 import { Text } from "@/components/Text"
 import { useSocket } from "@/context/AIChatContext"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { useSubscription } from "@/context/InAppSubscriptionContext"
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 
 const { width } = Dimensions.get("window")
 
-export const CustomTabBar = ({ state, descriptors, navigation }) => {
-  const {
-    themed,
-    theme: { colors },
-  } = useAppTheme()
+export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const { themed } = useAppTheme()
   const { unreadCount } = useSocket()
+  const { checkForActiveSubscription } = useSubscription()
+
+  const handleNavigateToChat = useCallback(() => {
+    if (checkForActiveSubscription()) {
+      navigation.navigate("AIChat")
+    } else {
+      navigation.navigate("SettingsMain", { screen: "SettingsSubscription" })
+    }
+  }, [checkForActiveSubscription, navigation])
 
   return (
     <View style={styles.container}>
@@ -56,7 +64,7 @@ export const CustomTabBar = ({ state, descriptors, navigation }) => {
 
         {/* Center AI Chat Button */}
         <TouchableOpacity
-          onPress={() => navigation.navigate("AIChat")}
+          onPress={handleNavigateToChat}
           style={styles.centerButton}
           activeOpacity={0.7}
         >

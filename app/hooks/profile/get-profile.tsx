@@ -11,6 +11,7 @@ export const useGetProfile = (userId: string) => {
   return useQuery({
     queryKey,
     queryFn,
+    refetchInterval: 30000,
     enabled: !!userId,
   })
 }
