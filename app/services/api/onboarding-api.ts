@@ -1,3 +1,4 @@
+import { posthog } from "@/utils/posthog"
 import { BaseApi } from "./base-api"
 import type { OnboardingStatusResponse, OnboardingStepData, OnboardingStepResponse } from "./types"
 
@@ -5,6 +6,7 @@ export class OnboardingApi extends BaseApi {
   async getOnboardingStatus(): Promise<OnboardingStatusResponse> {
     const response = await this.apisauce.get("/profile/onboarding/status")
     if (!response.ok) {
+      posthog.captureException(new Error("Failed to get onboarding status"))
       throw new Error(response.data?.message || "Failed to get onboarding status")
     }
     return response.data as OnboardingStatusResponse
@@ -17,6 +19,10 @@ export class OnboardingApi extends BaseApi {
     console.log(stepData)
     const response = await this.apisauce.post(`/profile/onboarding/${step}`, stepData)
     if (!response.ok) {
+      posthog.captureException(new Error(`Failed to submit step`), {
+        step: step,
+        stepData: JSON.stringify(stepData),
+      })
       throw new Error(response.data?.message || `Failed to submit step ${step}`)
     }
     return response.data as OnboardingStepResponse
@@ -25,6 +31,9 @@ export class OnboardingApi extends BaseApi {
   async completeOnboarding(): Promise<{ success: boolean }> {
     const response = await this.apisauce.post("/profile/onboarding/complete")
     if (!response.ok) {
+      posthog.captureException(new Error("Failed to complete onboarding"), {
+        data: JSON.stringify(response.data),
+      })
       throw new Error(response.data?.message || "Failed to complete onboarding")
     }
     return response.data as { success: boolean }

@@ -1,6 +1,7 @@
 import { ApisauceInstance, create } from "apisauce"
 import { authClient } from "../../../lib/auth"
 import { ApiConfig } from "./types"
+import { posthog } from "@/utils/posthog"
 
 export class BaseApi {
   apisauce: ApisauceInstance
@@ -30,6 +31,7 @@ export class BaseApi {
     // Handle 401 responses
     this.apisauce.addResponseTransform((response) => {
       if (response.status === 401) {
+        posthog.captureException(new Error("Unauthorized request, session may have expired"))
         console.log("Unauthorized request, session may have expired")
       }
     })

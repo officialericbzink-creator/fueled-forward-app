@@ -11,6 +11,7 @@ import { Linking, Platform } from "react-native"
 import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesPackage } from "react-native-purchases"
 
 import { useAuth } from "./AuthContext"
+import { usePostHog } from "posthog-react-native"
 
 // Subscription status types
 export type SubscriptionStatus = "active" | "trial" | "expired" | "none"
@@ -65,6 +66,7 @@ export interface InAppSubscriptionProviderProps {}
 export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionProviderProps>> = ({
   children,
 }) => {
+  const posthog = usePostHog()
   const { user, isAuthenticated } = useAuth()
 
   const [isInitialized, setIsInitialized] = useState(false)
@@ -103,8 +105,6 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
       }
 
       try {
-        console.log("🔐 Initializing RevenueCat for user:", user.id)
-
         // STUB: Check for dev bypass
         if (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PAYWALL === "true") {
           console.log("⚠️ DEV MODE: Bypassing RevenueCat initialization")
@@ -145,6 +145,7 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
             appUserID: user.id, // CRITICAL: Use actual user ID
           })
         } else {
+          posthog.captureException(new Error(`No API key for platform: ${Platform.OS}`))
           throw new Error(`No API key for platform: ${Platform.OS}`)
         }
 
@@ -163,12 +164,18 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
           console.log("✅ Subscription status updated:", parsedData)
         } catch (err) {
           console.error("❌ Failed to fetch subscription status:", err)
+          posthog.captureException(
+            err instanceof Error ? err : new Error("Failed to fetch subscription status"),
+          )
           setError(err instanceof Error ? err : new Error("Failed to fetch status"))
           setSubscriptionDataLoaded(true)
         } finally {
           setIsLoading(false)
         }
       } catch (err) {
+        posthog.captureException(
+          err instanceof Error ? err : new Error("Unknown initialization error"),
+        )
         console.error("❌ Failed to initialize RevenueCat:", err)
         setError(err instanceof Error ? err : new Error("Unknown initialization error"))
         setIsLoading(false) // ← Make sure to set loading false on error too
@@ -177,6 +184,7 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
     initializeRevenueCat()
   }, [isAuthenticated, user?.id, isInitialized])
+
   const parseCustomerInfo = (customerInfo: CustomerInfo): SubscriptionData => {
     // Check if user has any active entitlements
     const entitlements = customerInfo.entitlements.active
@@ -272,6 +280,9 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
       setSubscriptionData(parsedData)
       setSubscriptionDataLoaded(true) // ← Add this
     } catch (err) {
+      posthog.captureException(
+        err instanceof Error ? err : new Error("Failed to fetch subscription status"),
+      )
       console.error("❌ Failed to fetch subscription status:", err)
       setError(err instanceof Error ? err : new Error("Failed to fetch status"))
       setSubscriptionDataLoaded(true) // ← Add this even on error
@@ -299,13 +310,14 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
           throw new Error("No offerings available")
         }
 
-        // Map planType to product identifier
-        const productId = planType === "yearly" ? "yearly" : "monthly"
-
         // Find the package
-        const packageToPurchase = offerings.current.availablePackages.find(
-          (pkg) => pkg.product.identifier === productId,
-        )
+        const packageToPurchase = offerings.current.availablePackages.find((pkg) => {
+          if (planType === "yearly") {
+            return pkg.packageType === "ANNUAL"
+          } else {
+            return pkg.packageType === "MONTHLY"
+          }
+        })
 
         if (!packageToPurchase) {
           throw new Error(`Package not found for ${planType}`)
@@ -325,7 +337,7 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
         return { success: true }
       } catch (err: any) {
         console.error("❌ Purchase failed:", err)
-
+        posthog.captureException(err instanceof Error ? err : `purchase failed: ${err}`)
         // Handle user cancellation
         if (err.userCancelled) {
           return { success: false, error: "Purchase cancelled" }
@@ -337,7 +349,7 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
         setIsLoading(false)
       }
     },
-    [isInitialized],
+    [isInitialized, posthog],
   )
 
   // Restore purchases
@@ -370,12 +382,13 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
       return { success: true }
     } catch (err) {
       console.error("❌ Restore failed:", err)
+      posthog.captureException(err instanceof Error ? err : `Restore failed: ${err}`)
       const errorMessage = err instanceof Error ? err.message : "Restore failed"
       return { success: false, error: errorMessage }
     } finally {
       setIsLoading(false)
     }
-  }, [isInitialized])
+  }, [isInitialized, posthog])
 
   useEffect(() => {
     const loadOfferings = async () => {
@@ -434,13 +447,14 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
         }
       } catch (err) {
         console.error("Failed to load offerings:", err)
+        posthog.captureException(err instanceof Error ? err : `Failed to load offerings: ${err}`)
       } finally {
         setIsLoadingOfferings(false)
       }
     }
 
     loadOfferings()
-  }, [isInitialized])
+  }, [isInitialized, posthog])
 
   // Open native subscription management
   const manageSubscription = useCallback(() => {

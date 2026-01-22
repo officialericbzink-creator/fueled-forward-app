@@ -1,12 +1,14 @@
-// components/onboarding/Step3Therapy.tsx
 import { FC, useState, useEffect } from "react"
 import { ViewStyle, TextStyle, Pressable, View } from "react-native"
 import Animated from "react-native-reanimated"
+
 import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
-import { TextField } from "@/components/TextField"
 import { Text } from "@/components/Text"
+import { TextField } from "@/components/TextField"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { storage } from "@/utils/storage"
+import { promptToReviewAsync } from "@/utils/useStoreReviewRequest"
 
 interface Step3TherapyProps {
   onDataChange: (data: { inTherapy: boolean; therapyDetails?: string }) => void
@@ -19,6 +21,18 @@ export const Step3Therapy: FC<Step3TherapyProps> = ({ onDataChange, onValidation
   const [inTherapy, setInTherapy] = useState<boolean | null>(null)
   const [showFollowUp, setShowFollowUp] = useState(false)
   const [therapyDetails, setTherapyDetails] = useState("")
+  const [hasRequestedReview, setHasRequestedReview] = useMMKVBoolean(
+    "storeReviewRequested",
+    storage,
+  )
+
+  useEffect(() => {
+    // console.log("hasRequestedReview", hasRequestedReview)
+    if (!hasRequestedReview) {
+      // console.log("requesting review")
+      promptToReviewAsync().then(() => setHasRequestedReview(true))
+    }
+  }, [hasRequestedReview, setHasRequestedReview])
 
   useEffect(() => {
     if (inTherapy === null) {

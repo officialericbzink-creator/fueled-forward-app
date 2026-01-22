@@ -48,12 +48,12 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   } = useAppTheme()
 
   useHeader({
-    LeftActionComponent: (
-      <Image
-        source={profile?.image ? { uri: profile.image } : DEFAULT_AVATAR}
-        style={{ height: 45, width: 45, marginLeft: spacing.md, borderRadius: 22.5 }}
-      />
-    ),
+    // LeftActionComponent: (
+    //   <Image
+    //     source={profile?.image ? { uri: profile.image } : DEFAULT_AVATAR}
+    //     style={{ height: 45, width: 45, marginLeft: spacing.md, borderRadius: 22.5 }}
+    //   />
+    // ),
     rightIcon: "settings",
     onRightPress: () => navigation.navigate("SettingsMain", { screen: "SettingsMenu" }),
   })

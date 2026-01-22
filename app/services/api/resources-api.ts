@@ -1,4 +1,5 @@
 // services/api/clients/resources-api.ts
+import { posthog } from "@/utils/posthog"
 import { BaseApi } from "./base-api"
 import type { StrapiResource, StrapiResourceCategory, StrapiResponse } from "./types"
 
@@ -26,7 +27,7 @@ export class ResourcesApi extends BaseApi {
     })
   }
 
-  async getResources(): Promise<StrapiResource[]> {
+  async getResources(_params?: GetResourcesParams): Promise<StrapiResource[]> {
     const queryParams = new URLSearchParams()
 
     // Only fetch published resources
@@ -39,6 +40,7 @@ export class ResourcesApi extends BaseApi {
     const response = await this.apisauce.get(`/resources?${queryParams.toString()}`)
 
     if (!response.ok) {
+      posthog.captureException(new Error("Failed to fetch resources"))
       throw new Error(response.data?.message || "Failed to fetch resources")
     }
 
@@ -49,9 +51,8 @@ export class ResourcesApi extends BaseApi {
     // Strapi 5 uses documentId instead of id
     const response = await this.apisauce.get(`/resources/${documentId}?populate=*`)
 
-    console.log("getResourceById response:", JSON.stringify(response, null, 2))
-
     if (!response.ok) {
+      posthog.captureException(new Error("Failed to fetch resource"))
       throw new Error(response.data?.message || "Failed to fetch resource")
     }
 
@@ -65,6 +66,7 @@ export class ResourcesApi extends BaseApi {
     const response = await this.apisauce.get(`/categories?${queryParams.toString()}`)
 
     if (!response.ok) {
+      posthog.captureException(new Error("Failed to fetch categories"))
       throw new Error(response.data?.message || "Failed to fetch categories")
     }
 

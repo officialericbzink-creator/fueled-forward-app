@@ -11,7 +11,7 @@ import { CheckInType } from "@/services/api/types"
 import { ArrowLeftTag, NavArrowLeft } from "iconoir-react-native"
 import { ProgressBar } from "@/components/ProgressBar"
 import { TextField } from "@/components/TextField"
-import { MOOD_IMAGES, NUM_STEPS, STEP_QUESTIONS, MOOD_OPTIONS } from "@/utils/constants"
+import { MOOD_IMAGES, NUM_STEPS, STEP_QUESTIONS, MOOD_OPTIONS, AVG_MOOD } from "@/utils/constants"
 import { useCreateCheckIn } from "@/hooks/check-in/create-check-in"
 import Toast from "react-native-toast-message"
 import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
@@ -315,8 +315,7 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
                 />
                 <Text
                   text={
-                    MOOD_OPTIONS.find((opt) => opt.value === checkInFormState.overallMood)?.label ||
-                    ""
+                    AVG_MOOD.find((opt) => opt.value === checkInFormState.overallMood)?.label || ""
                   }
                   weight="semiBold"
                 />

@@ -1,6 +1,6 @@
 // screens/OnboardingScreen.tsx
 import { FC, useEffect, useState, useRef, useCallback } from "react"
-import { ViewStyle, View, ActivityIndicator } from "react-native"
+import { ViewStyle, View, ActivityIndicator, Pressable } from "react-native"
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -42,7 +42,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
   } = useGetOnboardingStatus()
   const submitStep = useSubmitOnboardingStep()
   const completeOnboarding = useCompleteOnboarding()
-  const { refetch } = useAuth()
+  const { refetch, signOut } = useAuth()
 
   useEffect(() => {
     if (onboardingStatus) {
@@ -190,6 +190,11 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
   useHeader(
     {
       leftIcon: canGoBack ? "back" : undefined,
+      LeftActionComponent: canGoBack ? undefined : (
+        <Pressable style={{ marginLeft: theme.spacing.md }} onPress={signOut}>
+          <Text text="Sign Out" size="xs" style={{ color: theme.colors.error }} />
+        </Pressable>
+      ),
       onLeftPress: canGoBack
         ? () => {
             // Go back one step

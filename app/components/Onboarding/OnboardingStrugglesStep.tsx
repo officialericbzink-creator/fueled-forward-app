@@ -32,7 +32,7 @@ export const Step1Struggles: FC<Step1StrugglesProps> = ({ onDataChange, onValida
   useEffect(() => {
     onDataChange({ struggles: selectedStruggles })
     onValidationChange(selectedStruggles.length > 0)
-  }, [selectedStruggles])
+  }, [selectedStruggles, onDataChange, onValidationChange])
 
   const toggleStruggle = (struggle: string) => {
     setSelectedStruggles((prev) =>

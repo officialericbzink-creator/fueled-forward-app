@@ -89,6 +89,30 @@ export const STEP_QUESTIONS: string[] = [
   "How connected did you feel to others today?",
   "How in control did you feel today?",
 ]
+
+export const AVG_MOOD = [
+  {
+    value: 1,
+    label: "Heavy",
+  },
+  {
+    value: 2,
+    label: "Low",
+  },
+  {
+    value: 3,
+    label: "Even",
+  },
+  {
+    value: 4,
+    label: "Calm",
+  },
+  {
+    value: 5,
+    label: "Hopeful",
+  },
+]
+
 export const MOOD_OPTIONS: Record<number, { value: number; label: string }[]> = {
   1: [
     {

@@ -1,16 +1,11 @@
 import { FC, useState, useEffect } from "react"
 import { ViewStyle } from "react-native"
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  Easing,
-} from "react-native-reanimated"
+import Animated from "react-native-reanimated"
 
-import { TextField } from "@/components/TextField"
 import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
-import { ThemedStyle } from "@/theme/types"
+import { TextField } from "@/components/TextField"
 import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
 
 interface Step0NameProps {
   onDataChange: ({ name }: { name: string }) => void
@@ -25,7 +20,7 @@ export const Step0Name: FC<Step0NameProps> = ({ onDataChange, onValidationChange
   useEffect(() => {
     onDataChange({ name })
     onValidationChange(name.trim().length > 0)
-  }, [name])
+  }, [name, onDataChange, onValidationChange])
 
   return (
     <Animated.View style={themed($container)}>
