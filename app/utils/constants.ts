@@ -1,23 +1,7 @@
-// Get the scheme based on APP_ENV at build time
-const getScheme = () => {
-  const appEnv = process.env.APP_ENV || "development"
-
-  const baseScheme = "fueled-forward-app"
-
-  if (appEnv === "production") {
-    return baseScheme
-  }
-  if (appEnv === "preview") {
-    return `${baseScheme}-preview`
-  }
-  return `${baseScheme}-dev`
-}
-
-export const APP_SCHEME = getScheme()
 export const BASE_SCHEME = "fueled-forward-app"
 
 // For deep linking
-export const DEEP_LINK_URL = `${APP_SCHEME}://`
+export const DEEP_LINK_URL = `${BASE_SCHEME}://`
 
 export const MOOD_IMAGES: Record<number, any> = {
   1: require("../../assets/images/mood-image-1.png"),

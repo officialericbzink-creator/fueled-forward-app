@@ -89,14 +89,15 @@ const AppStack = () => {
   } = useAppTheme()
 
   if (isLoading) {
-    return null // Or a loading component
+    return null
   }
 
-  const emailVerified = user?.emailVerified ?? false
+  // const emailVerified = user?.emailVerified ?? false
   // const completedOnboarding = user?.completedOnboarding ?? false
 
   return (
     <Stack.Navigator
+      key={isAuthenticated ? "authenticated" : "unauthenticated"}
       screenOptions={{
         headerShown: false,
         navigationBarColor: colors.background,
@@ -104,7 +105,7 @@ const AppStack = () => {
           backgroundColor: colors.palette.primary100,
         },
       }}
-      // initialRouteName={isAuthenticated ? "Auth" : "Welcome"}
+      initialRouteName={isAuthenticated ? "Auth" : "Welcome"}
     >
       {!isAuthenticated ? (
         <>
@@ -136,22 +137,6 @@ export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()
 
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
-
-  // useEffect(() => {
-  //   // Listen for deep links when app is already open
-  //   const subscription = Linking.addEventListener("url", (event) => {
-  //     console.log("📱 Deep link received:", event.url)
-  //   })
-
-  //   // Check for deep link that opened the app
-  //   Linking.getInitialURL().then((url) => {
-  //     if (url) {
-  //       console.log("📱 App opened with URL:", url)
-  //     }
-  //   })
-
-  //   return () => subscription.remove()
-  // }, [])
 
   return (
     <NavigationContainer

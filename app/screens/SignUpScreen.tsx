@@ -110,8 +110,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         keyboardType="email-address"
         labelTx="auth:signIn.emailFieldLabel"
         placeholderTx="auth:signUp.emailFieldPlaceholder"
-        // helper={error}
-        // status={error ? "error" : undefined}
+        textContentType="emailAddress"
         onSubmitEditing={() => authPasswordInput.current?.focus()}
       />
 
@@ -127,6 +126,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         labelTx="auth:signIn.passwordFieldLabel"
         placeholderTx="auth:signUp.passwordFieldPlaceholder"
         onSubmitEditing={signUp}
+        textContentType="newPassword"
         RightAccessory={PasswordRightAccessory}
       />
       <TextField
@@ -141,6 +141,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         labelTx="auth:signUp.confirmPasswordFieldLabel"
         placeholderTx="auth:signUp.confirmPasswordFieldPlaceholder"
         onSubmitEditing={signUp}
+        textContentType="newPassword"
         RightAccessory={PasswordRightAccessory}
       />
       <View style={themed($signInContainer)}>

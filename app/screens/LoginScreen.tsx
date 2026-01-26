@@ -59,11 +59,8 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         password: authPassword,
       })
       if (response.data) {
-        // On successful login, navigate to the Welcome screen
         console.log("Login Data: ", response.data)
       } else {
-        // Handle login failure (e.g., show an error message)
-        //
         if (response.error.code === "EMAIL_NOT_VERIFIED") {
           Toast.show({
             type: "info",
@@ -120,14 +117,13 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         value={authEmail}
         onChangeText={setAuthEmail}
         containerStyle={themed($textField)}
+        textContentType="username"
         autoCapitalize="none"
         autoComplete="email"
         autoCorrect={false}
         keyboardType="email-address"
         labelTx="auth:signIn.emailFieldLabel"
         placeholderTx="auth:signIn.emailFieldPlaceholder"
-        // helper={error}
-        // status={error ? "error" : undefined}
         onSubmitEditing={() => authPasswordInput.current?.focus()}
       />
 
@@ -138,6 +134,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         containerStyle={themed($textField)}
         autoCapitalize="none"
         autoComplete="password"
+        textContentType="password"
         autoCorrect={false}
         secureTextEntry={isAuthPasswordHidden}
         labelTx="auth:signIn.passwordFieldLabel"
