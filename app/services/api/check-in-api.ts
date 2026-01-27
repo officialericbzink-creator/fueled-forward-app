@@ -15,12 +15,13 @@ export class CheckInApi extends BaseApi {
     return response.data as CheckInHistoryResponse
   }
 
-  async getTodaysCheckIn(): Promise<CheckInDetailsResponse> {
+  async getTodaysCheckIn(): Promise<CheckInDetailsResponse | { data: null }> {
     const response = await this.apisauce.get("/check-in/today")
     if (!response.ok) {
       throw new Error(response.data?.message || "Failed to fetch today's check-in")
     }
-    return response.data as CheckInDetailsResponse
+
+    return (response.data as CheckInDetailsResponse) || { data: null }
   }
 
   async hasCheckedInToday(): Promise<{ hasCheckedIn: boolean }> {
