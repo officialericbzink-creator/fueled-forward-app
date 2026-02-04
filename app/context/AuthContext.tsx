@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { SessionQueryParams } from "better-auth/types"
 
 import { authClient } from "../../lib/auth"
+import { posthog } from "@/utils/posthog"
 
 export type AuthContextType = {
   // Session data
@@ -36,7 +37,6 @@ export interface AuthProviderProps {}
 
 export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ children }) => {
   const queryClient = useQueryClient()
-  // Get session from Better Auth with loading states
   const { data: session, isPending, error, refetch, isRefetching } = authClient.useSession()
 
   const signIn = useCallback(
@@ -52,6 +52,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
           error: result.error ? { message: result.error.message || "Sign in failed" } : undefined,
         }
       } catch (err) {
+        posthog.captureException(err, { context: "AuthProvider.signIn", timestamp: Date.now() })
         return {
           error: { message: err instanceof Error ? err.message : "An unexpected error occurred" },
         }
@@ -61,7 +62,6 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   )
 
   const signOut = useCallback(async () => {
-    // console.log("Signing out user...")
     try {
       await authClient.signOut()
       queryClient.clear()
@@ -82,12 +82,6 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     refetch,
     isRefetching,
   }
-
-  // useEffect(() => {
-  //   if (session) {
-  //     console.log("Full session object:", JSON.stringify(session, null, 2))
-  //   }
-  // }, [session])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

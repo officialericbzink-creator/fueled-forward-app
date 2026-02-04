@@ -39,15 +39,8 @@ const config = {
     SignUp: {
       path: "signup",
     },
-    Demo: {
-      screens: {
-        DemoShowroom: {
-          path: "showroom/:queryIndex?/:itemIndex?",
-        },
-        DemoDebug: "debug",
-        DemoPodcastList: "podcast",
-        DemoCommunity: "community",
-      },
+    ResourcesHome: {
+      path: "resources",
     },
   },
 }
@@ -86,7 +79,7 @@ export function App() {
         sessionReplayConfig: {
           // Whether text inputs are masked. Default is true.
           // Password inputs are always masked regardless
-          maskAllTextInputs: true,
+          maskAllTextInputs: false,
           // Whether images are masked. Default is true.
           maskAllImages: true,
           // Capture logs automatically. Default is true.

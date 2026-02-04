@@ -12,6 +12,7 @@ const en = {
       loadingButton: "Signing In...",
       noAccountText: "Don't have an account?",
       signUpButton: "Sign Up",
+      signInButtonLoading: "Signing In...",
     },
     signUp: {
       title: "Create Account",

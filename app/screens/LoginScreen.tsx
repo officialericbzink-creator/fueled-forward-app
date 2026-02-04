@@ -16,6 +16,7 @@ import Toast from "react-native-toast-message"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useHeader } from "@/utils/useHeader"
 import Config from "@/config"
+import { posthog } from "@/utils/posthog"
 // import { useNavigation } from "@react-navigation/native"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
@@ -45,7 +46,6 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
 
   const login = async () => {
     setIsSubmitted(true)
-    // setAttemptsCount(attemptsCount + 1)
 
     try {
       if (!authEmail || authEmail.length === 0) return
@@ -59,7 +59,10 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         password: authPassword,
       })
       if (response.data) {
-        console.log("Login Data: ", response.data)
+        posthog.capture("login_successful", {
+          email: authEmail,
+          timestamp: Date.now(),
+        })
       } else {
         if (response.error.code === "EMAIL_NOT_VERIFIED") {
           Toast.show({
@@ -75,9 +78,15 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
             text1: "Login Failed",
             text2: response.error?.message || "An error occurred during login.",
           })
+          throw new Error(response.error?.message || "Login failed")
         }
       }
     } catch (error) {
+      posthog.captureException(error, {
+        context: "LoginScreen.login",
+        email: authEmail,
+        timestamp: Date.now(),
+      })
       console.error("An error occurred during login:", error)
       Toast.show({
         type: "error",
@@ -160,10 +169,11 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       </View>
       <Button
         testID="login-button"
-        tx="auth:signIn.submitButton"
+        tx={isSubmitted ? "auth:signIn.signInButtonLoading" : "auth:signIn.submitButton"}
         style={themed($tapButton)}
         preset="reversed"
         onPress={login}
+        disabled={isSubmitted}
       />
     </Screen>
   )
