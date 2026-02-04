@@ -1,6 +1,5 @@
 import { ComponentType, FC, useMemo, useRef, useState } from "react"
 import { Linking, Pressable, TextInput, View, ViewStyle } from "react-native"
-import { Link, useNavigation } from "@react-navigation/native"
 
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
@@ -13,11 +12,9 @@ import { ThemedStyle } from "@/theme/types"
 
 import { authClient } from "../../lib/auth"
 import Toast from "react-native-toast-message"
-import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useHeader } from "@/utils/useHeader"
 import Config from "@/config"
 import { posthog } from "@/utils/posthog"
-// import { useNavigation } from "@react-navigation/native"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -28,10 +25,6 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const [authPassword, setAuthPassword] = useState("")
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  // const [attemptsCount, setAttemptsCount] = useState(0)
-  const { data: session } = authClient.useSession()
-
-  const $topContainerInsets = useSafeAreaInsetsStyle(["top"])
 
   const {
     themed,
@@ -195,7 +188,6 @@ const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 const $signUpContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   alignItems: "center",
-  // justifyContent: "center",
   gap: spacing.sm,
   marginBottom: spacing.md,
 })
