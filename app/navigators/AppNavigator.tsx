@@ -105,7 +105,6 @@ const AppStack = () => {
           backgroundColor: colors.palette.primary100,
         },
       }}
-      initialRouteName={isAuthenticated ? "Auth" : "Welcome"}
     >
       {!isAuthenticated ? (
         <>
