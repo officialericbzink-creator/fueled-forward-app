@@ -119,14 +119,14 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         value={authEmail}
         onChangeText={setAuthEmail}
         containerStyle={themed($textField)}
-        textContentType="username"
+        textContentType="none"
         autoCapitalize="none"
-        autoComplete="email"
+        autoComplete="off"
         autoCorrect={false}
         keyboardType="email-address"
         labelTx="auth:signIn.emailFieldLabel"
         placeholderTx="auth:signIn.emailFieldPlaceholder"
-        onSubmitEditing={() => authPasswordInput.current?.focus()}
+        // onSubmitEditing={() => authPasswordInput.current?.focus()}
       />
 
       <TextField
@@ -135,13 +135,13 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         onChangeText={setAuthPassword}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="password"
-        textContentType="password"
+        autoComplete="off"
+        textContentType="none"
         autoCorrect={false}
         secureTextEntry={isAuthPasswordHidden}
         labelTx="auth:signIn.passwordFieldLabel"
         placeholderTx="auth:signIn.passwordFieldPlaceholder"
-        onSubmitEditing={login}
+        // onSubmitEditing={login}
         RightAccessory={PasswordRightAccessory}
       />
 

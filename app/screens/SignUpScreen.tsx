@@ -105,13 +105,13 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         onChangeText={setAuthEmail}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="email"
+        autoComplete="off"
         autoCorrect={false}
         keyboardType="email-address"
         labelTx="auth:signIn.emailFieldLabel"
         placeholderTx="auth:signUp.emailFieldPlaceholder"
-        textContentType="emailAddress"
-        onSubmitEditing={() => authPasswordInput.current?.focus()}
+        textContentType="none"
+        // onSubmitEditing={() => authPasswordInput.current?.focus()}
       />
 
       <TextField
@@ -120,13 +120,13 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         onChangeText={setAuthPassword}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="password"
+        autoComplete="off"
         autoCorrect={false}
         secureTextEntry={isAuthPasswordHidden}
         labelTx="auth:signIn.passwordFieldLabel"
         placeholderTx="auth:signUp.passwordFieldPlaceholder"
-        onSubmitEditing={signUp}
-        textContentType="newPassword"
+        // onSubmitEditing={signUp}
+        textContentType="none"
         RightAccessory={PasswordRightAccessory}
       />
       <TextField
@@ -135,13 +135,13 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         onChangeText={setConfirmPassword}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="password"
+        autoComplete="off"
         autoCorrect={false}
         secureTextEntry={isAuthPasswordHidden}
         labelTx="auth:signUp.confirmPasswordFieldLabel"
         placeholderTx="auth:signUp.confirmPasswordFieldPlaceholder"
-        onSubmitEditing={signUp}
-        textContentType="newPassword"
+        // onSubmitEditing={signUp}
+        textContentType="none"
         RightAccessory={PasswordRightAccessory}
       />
       <View style={themed($signInContainer)}>

@@ -39,6 +39,15 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   const queryClient = useQueryClient()
   const { data: session, isPending, error, refetch, isRefetching } = authClient.useSession()
 
+  useEffect(() => {
+    console.log("🔍 AUTH STATE CHANGED:", {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      isPending,
+      timestamp: new Date().toISOString(),
+    })
+  }, [session, isPending])
+
   const signIn = useCallback(
     async (email: string, password: string) => {
       try {

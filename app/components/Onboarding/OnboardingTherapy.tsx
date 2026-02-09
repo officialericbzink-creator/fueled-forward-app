@@ -9,6 +9,7 @@ import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { storage } from "@/utils/storage"
 import { promptToReviewAsync } from "@/utils/useStoreReviewRequest"
+import { useMMKVBoolean } from "react-native-mmkv"
 
 interface Step3TherapyProps {
   onDataChange: (data: { inTherapy: boolean; therapyDetails?: string }) => void
@@ -27,38 +28,33 @@ export const Step3Therapy: FC<Step3TherapyProps> = ({ onDataChange, onValidation
   )
 
   useEffect(() => {
-    // console.log("hasRequestedReview", hasRequestedReview)
     if (!hasRequestedReview) {
-      // console.log("requesting review")
       promptToReviewAsync().then(() => setHasRequestedReview(true))
     }
   }, [hasRequestedReview, setHasRequestedReview])
 
   useEffect(() => {
     if (inTherapy === null) {
-      // Haven't answered the first question yet
       onValidationChange(false)
       return
     }
 
     if (inTherapy) {
-      // If in therapy, need to provide how long
       const isValid = therapyDetails.trim().length > 0
       onDataChange({ inTherapy, therapyDetails: therapyDetails.trim() })
       onValidationChange(isValid)
     } else {
-      // If not in therapy, details are optional
       onDataChange({
         inTherapy,
         therapyDetails: therapyDetails.trim().length > 0 ? therapyDetails.trim() : undefined,
       })
-      onValidationChange(true) // Always valid when not in therapy
+      onValidationChange(true)
     }
   }, [inTherapy, therapyDetails])
 
   const handleTherapyChoice = (choice: boolean) => {
     setInTherapy(choice)
-    setTherapyDetails("") // Reset details when choice changes
+    setTherapyDetails("")
     setShowFollowUp(true)
   }
 

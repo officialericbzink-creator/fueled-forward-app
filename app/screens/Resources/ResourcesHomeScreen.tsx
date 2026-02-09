@@ -13,7 +13,6 @@ import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
 
-import { resourceCategories, resources } from "../../../lib/mockData/resources"
 import FilterBottomSheet, { FilterState } from "@/components/ResourceFilterSheet"
 import { resourceTypeColors } from "@/utils/constants"
 import { useGetResources } from "@/hooks/resources/get-resource-list"

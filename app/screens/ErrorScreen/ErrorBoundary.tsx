@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from "react"
 
 import { ErrorDetails } from "./ErrorDetails"
+import { posthog } from "@/utils/posthog"
 
 interface Props {
   children: ReactNode
@@ -40,6 +41,10 @@ export class ErrorBoundary extends Component<Props, State> {
     // You can also log error messages to an error reporting service here
     // This is a great place to put BugSnag, Sentry, crashlytics, etc:
     // reportCrash(error)
+    posthog.capture("error_boundary_catch", {
+      error: `${error}`.trim(),
+      errorInfo: `${errorInfo.componentStack}`.trim(),
+    })
   }
 
   // Reset the error back to null
