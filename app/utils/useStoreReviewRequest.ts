@@ -4,7 +4,7 @@ import * as StoreReview from "expo-store-review"
 async function askForFeedback(): Promise<boolean> {
   return new Promise((resolve) => {
     Alert.alert(
-      "Are you enjoying Pillar Valley?",
+      "Are you enjoying Fueled Forward?",
       undefined,
       [
         {
