@@ -1,5 +1,13 @@
 import { FC, useState, useEffect } from "react"
-import { ViewStyle, Pressable, View, ScrollView, ActivityIndicator, Alert } from "react-native"
+import {
+  ViewStyle,
+  Pressable,
+  View,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Linking,
+} from "react-native"
 import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -11,6 +19,7 @@ import { Radio } from "@/components/Toggle/Radio"
 
 import { useSubscription } from "@/context/InAppSubscriptionContext"
 import type { PlanType } from "@/context/InAppSubscriptionContext"
+import { BASE_WEB_URL } from "@/utils/constants"
 
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsSubscription"> {}
 
@@ -390,6 +399,25 @@ export const SettingsSubscriptionScreen: FC<SettingsMenuScreenProps> = ({ naviga
         showsVerticalScrollIndicator={false}
       >
         {renderContent()}
+        <View
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: theme.spacing.xxl,
+            gap: theme.spacing.sm,
+          }}
+        >
+          <Pressable onPress={() => Linking.openURL(`${BASE_WEB_URL}/terms`)}>
+            <Text size="xxs" style={{ color: theme.colors.tint, textDecorationLine: "underline" }}>
+              Terms of Use
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL(`${BASE_WEB_URL}/privacy`)}>
+            <Text size="xxs" style={{ color: theme.colors.tint, textDecorationLine: "underline" }}>
+              Privacy Policy
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </Screen>
   )

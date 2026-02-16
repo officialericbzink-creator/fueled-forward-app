@@ -1,4 +1,6 @@
 export const BASE_SCHEME = "fueled-forward-app"
+export const BASE_WEB_URL = "https://www.fueledforwardapp.com"
+export const BASE_AUTH_URL = "https://auth.fueledforwardapp.com"
 
 // For deep linking
 export const DEEP_LINK_URL = `${BASE_SCHEME}://`

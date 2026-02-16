@@ -29,4 +29,12 @@ export class ProfileApi extends BaseApi {
     }
     return response.data as ImageUploadResult
   }
+
+  async deleteProfile(): Promise<{ success: boolean }> {
+    const response = await this.apisauce.delete("/profile/delete")
+    if (!response.ok) {
+      throw new Error(response.data?.message || "Failed to delete profile")
+    }
+    return response.data as { success: boolean }
+  }
 }

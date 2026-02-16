@@ -14,6 +14,8 @@ import { useSocket } from "@/context/AIChatContext"
 import Animated from "react-native-reanimated"
 import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
 import { ChatMessage } from "@/services/api"
+import { useAIDisclosure } from "@/hooks/useAIDisclosure"
+import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
 // import * as Notifications from "expo-notifications"
 
 interface AIChatScreenProps extends AppStackScreenProps<"AIChat"> {}
@@ -25,11 +27,28 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollViewRef = useRef<ScrollView>(null)
+  const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
+  const [showAIDisclosure, setShowAIDisclosure] = useState(false)
 
   const {
     theme: { spacing, colors },
     themed,
   } = useAppTheme()
+  useEffect(() => {
+    if (!hasAcceptedAIDisclosure) {
+      setShowAIDisclosure(true)
+    }
+  }, [hasAcceptedAIDisclosure])
+
+  const handleAcceptAIDisclosure = () => {
+    acceptDisclosure()
+    setShowAIDisclosure(false)
+  }
+
+  const handleDeclineAIDisclosure = () => {
+    // Navigate back if they decline
+    navigation.goBack()
+  }
 
   const { data: conversationData, isLoading: isLoadingHistory } = useGetConversationHistory()
 
@@ -135,6 +154,18 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     },
     titleImage: require("../../assets/images/eric-face.png"),
   })
+
+  if (!hasAcceptedAIDisclosure) {
+    return (
+      <Screen>
+        <AIDisclosureModal
+          visible={showAIDisclosure}
+          onAccept={handleAcceptAIDisclosure}
+          onDecline={handleDeclineAIDisclosure}
+        />
+      </Screen>
+    )
+  }
 
   if (isLoadingHistory) {
     return (

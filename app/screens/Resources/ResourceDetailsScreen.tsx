@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { TextStyle, View, ViewStyle, ActivityIndicator } from "react-native"
+import { TextStyle, View, ViewStyle, ActivityIndicator, Pressable, Linking } from "react-native"
 import Markdown from "react-native-markdown-display"
 
 import { EmptyState } from "@/components/EmptyState"
@@ -59,6 +59,8 @@ export const ResourceDetailsScreen: FC<ResourceDetailsScreenProps> = ({ navigati
   return (
     <Screen style={themed($root)} preset="auto">
       <Text text={resource.title} size={"xl"} weight={"bold"} />
+
+      {/* Header Section */}
       <View
         style={{
           flexDirection: "row",
@@ -98,11 +100,78 @@ export const ResourceDetailsScreen: FC<ResourceDetailsScreenProps> = ({ navigati
         size="xxs"
         style={{ marginVertical: spacing.lg, color: colors.palette.primary500 }}
       />
+
+      {/* Article Content */}
       <Markdown>{resource.content}</Markdown>
+
+      {/* Citations and Sources */}
+      <View style={themed($sourcesContainer)}>
+        <Text size="md" weight="semiBold">
+          Medical & Health Information Sources
+        </Text>
+        <Text size="xs" style={{ marginTop: spacing.sm, color: colors.textDim }}>
+          Content in this section is informed by the following trusted sources:
+        </Text>
+
+        <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+          <SourceLink
+            name="National Institute of Mental Health (NIMH)"
+            url="https://www.nimh.nih.gov"
+          />
+          <SourceLink
+            name="NAMI (National Alliance on Mental Illness)"
+            url="https://www.nami.org"
+          />
+          <SourceLink name="Psych Central" url="https://psychcentral.com" />
+          <SourceLink name="ChatGPT (OpenAI)" />
+          <SourceLink name="Lived Experience & Personal Insights" url="https://ericbzink.com" />
+        </View>
+
+        <Text
+          size="xxs"
+          style={{ marginTop: spacing.md, color: colors.textDim, fontStyle: "italic" }}
+        >
+          This information is for educational purposes and is not a substitute for professional
+          medical advice, diagnosis, or treatment. Always seek the advice of your physician or other
+          qualified health provider.
+        </Text>
+      </View>
       <View style={{ height: spacing.xl }}></View>
     </Screen>
   )
 }
+
+const SourceLink = ({ name, url }: { name: string; url?: string }) => {
+  const {
+    themed,
+    theme: { colors },
+  } = useAppTheme()
+
+  if (url) {
+    return (
+      <Pressable onPress={() => Linking.openURL(url)}>
+        <Text size="xs" style={{ color: colors.tint }}>
+          • {name} ↗
+        </Text>
+      </Pressable>
+    )
+  }
+
+  return (
+    <Text size="xs" style={{ color: colors.text }}>
+      • {name}
+    </Text>
+  )
+}
+
+const $sourcesContainer: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
+  marginTop: spacing.xxl,
+  padding: spacing.md,
+  backgroundColor: colors.palette.neutral100,
+  borderRadius: spacing.sm,
+  borderWidth: 1,
+  borderColor: colors.border,
+})
 
 const $root: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flex: 1,

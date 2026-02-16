@@ -9,7 +9,9 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": ["**/*"],
+  "assetBundlePatterns": [
+    "**/*"
+  ],
   "android": {
     "icon": "./assets/images/ff-icon-1024.png",
     "adaptiveIcon": {
@@ -19,7 +21,9 @@
     "allowBackup": false,
     "edgeToEdgeEnabled": true,
     "package": "com.fueledforwardapp",
-    "permissions": ["android.permission.RECORD_AUDIO"]
+    "permissions": [
+      "android.permission.RECORD_AUDIO"
+    ]
   },
   "ios": {
     "icon": "./assets/images/ff-icon-1024.png",
@@ -29,11 +33,15 @@
       "NSPrivacyAccessedAPITypes": [
         {
           "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          "NSPrivacyAccessedAPITypeReasons": [
+            "CA92.1"
+          ]
         },
         {
           "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          "NSPrivacyAccessedAPITypeReasons": [
+            "CA92.1"
+          ]
         }
       ]
     },
@@ -53,7 +61,7 @@
     [
       "expo-image-picker",
       {
-        "photosPermission": "Allow $(PRODUCT_NAME) to access your photos"
+        "photosPermission": "Fueled Forward needs access to your photo library so you can upload a profile picture to personalize your account."
       }
     ],
     [

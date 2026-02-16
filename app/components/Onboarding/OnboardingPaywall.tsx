@@ -1,4 +1,4 @@
-import { Pressable, View, ViewStyle, ActivityIndicator } from "react-native"
+import { Pressable, View, ViewStyle, ActivityIndicator, Linking } from "react-native"
 import { Text } from "../Text"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
@@ -6,6 +6,7 @@ import { FC, useEffect, useState } from "react"
 import { Radio } from "../Toggle/Radio"
 import { useSubscription } from "@/context/InAppSubscriptionContext"
 import type { PlanType } from "@/context/InAppSubscriptionContext"
+import { BASE_WEB_URL } from "@/utils/constants"
 
 interface OnboardingPaywallStepProps {
   onDataChange: (data: { paywallCompleted: boolean; planType?: PlanType }) => void
@@ -127,6 +128,25 @@ export const OnboardingPaywallStep: FC<OnboardingPaywallStepProps> = ({
         centered
         style={{ color: theme.colors.textDim }}
       />
+      <View
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: theme.spacing.xxl,
+          gap: theme.spacing.sm,
+        }}
+      >
+        <Pressable onPress={() => Linking.openURL(`${BASE_WEB_URL}/terms`)}>
+          <Text size="xxs" style={{ color: theme.colors.tint, textDecorationLine: "underline" }}>
+            Terms of Use
+          </Text>
+        </Pressable>
+        <Pressable onPress={() => Linking.openURL(`${BASE_WEB_URL}/privacy`)}>
+          <Text size="xxs" style={{ color: theme.colors.tint, textDecorationLine: "underline" }}>
+            Privacy Policy
+          </Text>
+        </Pressable>
+      </View>
     </View>
   )
 }

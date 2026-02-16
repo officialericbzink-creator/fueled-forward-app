@@ -1,5 +1,5 @@
 import { FC, useCallback } from "react"
-import { Alert, TouchableOpacity, View, ViewStyle } from "react-native"
+import { Alert, Linking, Pressable, TouchableOpacity, View, ViewStyle } from "react-native"
 import {
   ArrowRight,
   ArrowUpRight,
@@ -9,6 +9,7 @@ import {
   Lock,
   Trash,
   Clock,
+  UserXmark,
 } from "iconoir-react-native"
 
 import { Button } from "@/components/Button"
@@ -21,6 +22,7 @@ import { ThemedStyle } from "@/theme/types"
 import { useHeader } from "@/utils/useHeader"
 import { useClearConversation } from "@/hooks/chat/clear-chat-history"
 import Toast from "react-native-toast-message"
+import { BASE_WEB_URL } from "@/utils/constants"
 // import { useNavigation } from "@react-navigation/native"
 
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsMenu"> {}
@@ -96,7 +98,7 @@ export const SettingsMainScreen: FC<SettingsMenuScreenProps> = ({ navigation }) 
             <ArrowRight width={20} height={20} color={colors.text} />
           </View>
         </TouchableOpacity>
-        {/*<TouchableOpacity onPress={() => navigation.navigate("SettingsSecurity")}>
+        <TouchableOpacity onPress={() => navigation.navigate("SettingsAccountDelete")}>
           <View
             style={{
               paddingVertical: spacing.md,
@@ -105,11 +107,11 @@ export const SettingsMainScreen: FC<SettingsMenuScreenProps> = ({ navigation }) 
               gap: spacing.sm,
             }}
           >
-            <Lock width={36} height={36} color={colors.text} />
-            <Text text="Security" weight="semiBold" size="xs" />
+            <UserXmark width={36} height={36} color={colors.text} />
+            <Text text="Delete Account" weight="semiBold" size="xs" />
             <ArrowRight width={20} height={20} color={colors.text} />
           </View>
-        </TouchableOpacity>*/}
+        </TouchableOpacity>
         <TouchableOpacity onPress={handleClearConversation}>
           <View
             style={{
@@ -137,7 +139,27 @@ export const SettingsMainScreen: FC<SettingsMenuScreenProps> = ({ navigation }) 
             <ArrowRight width={20} height={20} color={colors.text} />
           </View>
         </TouchableOpacity>*/}
+        <View
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: spacing.xxl,
+            gap: spacing.sm,
+          }}
+        >
+          <Pressable onPress={() => Linking.openURL(`${BASE_WEB_URL}/terms`)}>
+            <Text size="xxs" style={{ color: colors.tint, textDecorationLine: "underline" }}>
+              Terms of Use
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL(`${BASE_WEB_URL}/privacy`)}>
+            <Text size="xxs" style={{ color: colors.tint, textDecorationLine: "underline" }}>
+              Privacy Policy
+            </Text>
+          </Pressable>
+        </View>
       </View>
+
       <Button testID="login-button" text={"Logout"} preset="cancel" onPress={() => signOut()} />
     </Screen>
   )

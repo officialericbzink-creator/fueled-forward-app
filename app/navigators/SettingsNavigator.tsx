@@ -6,6 +6,7 @@ import { SettingsSubscriptionScreen } from "@/screens/Settings/SettingsSubscript
 import { SettingsSecurityScreen } from "@/screens/Settings/SettingsSecurity"
 import { SettingsConversationScreen } from "@/screens/Settings/SettingsConversation"
 import { SettingsCheckInScreen } from "@/screens/Settings/SettingsCheckInScreen"
+import { SettingsAccountDeleteScreen } from "@/screens/Settings/SettingsAccountDeleteScreen"
 
 export type SettingsNavigatorParamList = {
   SettingsMenu: undefined
@@ -14,6 +15,7 @@ export type SettingsNavigatorParamList = {
   SettingsSecurity: undefined
   SettingsConversation: undefined
   SettingsCheckIn: undefined
+  SettingsAccountDelete: undefined
 }
 export type SettingsStackScreenProps<T extends keyof SettingsNavigatorParamList> =
   NativeStackScreenProps<SettingsNavigatorParamList, T>
@@ -28,6 +30,7 @@ export const SettingsNavigator = () => {
       <Stack.Screen name="SettingsSecurity" component={SettingsSecurityScreen} />
       <Stack.Screen name="SettingsConversation" component={SettingsConversationScreen} />
       <Stack.Screen name="SettingsCheckIn" component={SettingsCheckInScreen} />
+      <Stack.Screen name="SettingsAccountDelete" component={SettingsAccountDeleteScreen} />
     </Stack.Navigator>
   )
 }
