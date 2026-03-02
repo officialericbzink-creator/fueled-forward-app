@@ -248,3 +248,34 @@ export const STRUGGLE_OPTIONS = [
 ] as const
 
 export const DEFAULT_AVATAR = require("../../assets/images/default-avatar.png")
+
+export const MAX_AVATAR_UPLOAD_BYTES = 5 * 1024 * 1024 // 5MB (should match API)
+export const AVATAR_ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+] as const
+
+export function avatarExtensionForMimeType(mimeType: string): string {
+  switch (mimeType) {
+    case "image/jpeg":
+    case "image/jpg":
+      return "jpg"
+    case "image/png":
+      return "png"
+    case "image/webp":
+      return "webp"
+    case "image/gif":
+      return "gif"
+    case "image/heic":
+      return "heic"
+    case "image/heif":
+      return "heif"
+    default:
+      return "jpg"
+  }
+}

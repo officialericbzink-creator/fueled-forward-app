@@ -8,6 +8,7 @@ import {
   View,
   ViewStyle,
 } from "react-native"
+import * as FileSystem from "expo-file-system"
 import * as ImagePicker from "expo-image-picker"
 import Toast from "react-native-toast-message"
 
@@ -29,7 +30,13 @@ import {
 import { Button } from "@/components/Button"
 import { useUpdateProfile } from "@/hooks/profile/update-profile"
 import { useUploadAvatar } from "@/hooks/profile/upload-avatar"
-import { STRUGGLE_OPTIONS, DEFAULT_AVATAR } from "@/utils/constants"
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  DEFAULT_AVATAR,
+  MAX_AVATAR_UPLOAD_BYTES,
+  STRUGGLE_OPTIONS,
+  avatarExtensionForMimeType,
+} from "@/utils/constants"
 // import { useNavigation } from "@react-navigation/native"
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsProfile"> {}
 
@@ -60,18 +67,38 @@ export const SettingsProfileScreen: FC<SettingsMenuScreenProps> = ({ navigation 
       quality: 0.5,
     })
 
-    if (result) {
+    if (result && !result.canceled) {
       // try uploading to media service
       const asset = result.assets?.[0]
       if (!asset?.uri) {
         throw new Error("No image selected")
       }
 
+      const fileInfo = await FileSystem.getInfoAsync(asset.uri)
+      if (
+        fileInfo.exists &&
+        typeof fileInfo.size === "number" &&
+        fileInfo.size > MAX_AVATAR_UPLOAD_BYTES
+      ) {
+        Alert.alert(
+          "Image too large",
+          `Please choose an image smaller than ${Math.round(MAX_AVATAR_UPLOAD_BYTES / (1024 * 1024))}MB.`,
+        )
+        return
+      }
+
       const formData = new FormData()
 
-      const uriParts = asset.uri.split(".")
-      const fileExtension = uriParts[uriParts.length - 1]
-      const mimeType = asset.mimeType || `image/${fileExtension}`
+      const mimeType = asset.mimeType
+      if (!mimeType || !AVATAR_ALLOWED_MIME_TYPES.includes(mimeType as any)) {
+        Alert.alert(
+          "Unsupported image type",
+          `Please choose one of: ${AVATAR_ALLOWED_MIME_TYPES.join(", ")}.`,
+        )
+        return
+      }
+
+      const fileExtension = avatarExtensionForMimeType(mimeType)
 
       formData.append("file", {
         uri: asset.uri,
