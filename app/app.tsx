@@ -1,14 +1,14 @@
 import "./utils/gestureHandler"
 
-import { useEffect, useState, useCallback } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { PostHogProvider } from "posthog-react-native"
-import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
+import { Platform } from "react-native"
 
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 
@@ -69,6 +69,9 @@ export function App() {
   return (
     <PostHogProvider
       apiKey="phc_Jr5GtJ6tJ1XgHIRHQOn7b5qUk4d07CJynLHLzbneZ5m"
+      // Prevent PostHogProvider from calling react-navigation hooks before NavigationContainer exists.
+      // (Screen autocapture can be re-enabled later with explicit navigation integration.)
+      autocapture={{ captureScreens: false }}
       options={{
         host: "https://us.i.posthog.com",
 
@@ -98,20 +101,18 @@ export function App() {
       }}
     >
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <KeyboardProvider>
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider>
-              <AuthProvider>
-                <InAppSubscriptionProvider>
-                  <SocketProvider>
-                    <AppContent />
-                  </SocketProvider>
-                </InAppSubscriptionProvider>
-              </AuthProvider>
-              <ToastWrapper />
-            </ThemeProvider>
-          </QueryClientProvider>
-        </KeyboardProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <InAppSubscriptionProvider>
+                <SocketProvider>
+                  <AppContent />
+                </SocketProvider>
+              </InAppSubscriptionProvider>
+            </AuthProvider>
+            <ToastWrapper />
+          </ThemeProvider>
+        </QueryClientProvider>
       </SafeAreaProvider>
     </PostHogProvider>
   )
@@ -134,6 +135,9 @@ function AppContent() {
 }
 
 function ToastWrapper() {
+  // `react-native-toast-message` uses DOM-native operations that are not supported on recent
+  // `react-native-web` versions.
+  if (Platform.OS === "web") return null
   const $topContainerInsets = useSafeAreaInsetsStyle(["top"])
   return <Toast topOffset={$topContainerInsets.paddingTop} />
 }

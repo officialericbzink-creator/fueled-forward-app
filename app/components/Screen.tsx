@@ -12,7 +12,7 @@ import {
 } from "react-native"
 import { useScrollToTop } from "@react-navigation/native"
 import { SystemBars, SystemBarsProps, SystemBarStyle } from "react-native-edge-to-edge"
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 
 import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
@@ -197,7 +197,7 @@ function ScreenWithScrolling(props: ScreenProps) {
     style,
   } = props as ScrollScreenProps
 
-  const ref = useRef<ScrollView>(null)
+  const ref = useRef<any>(null)
 
   const { scrollEnabled, onContentSizeChange, onLayout } = useAutoPreset(props as AutoScreenProps)
 
@@ -207,10 +207,11 @@ function ScreenWithScrolling(props: ScreenProps) {
 
   return (
     <KeyboardAwareScrollView
-      bottomOffset={keyboardBottomOffset}
-      {...{ keyboardShouldPersistTaps, scrollEnabled, ref }}
+      enableOnAndroid
+      extraScrollHeight={keyboardBottomOffset}
+      {...({ keyboardShouldPersistTaps, scrollEnabled, ref } as any)}
       {...ScrollViewProps}
-      onLayout={(e) => {
+      onLayout={(e: LayoutChangeEvent) => {
         onLayout(e)
         ScrollViewProps?.onLayout?.(e)
       }}
@@ -221,6 +222,7 @@ function ScreenWithScrolling(props: ScreenProps) {
       style={[$outerStyle, ScrollViewProps?.style, style]}
       contentContainerStyle={[
         $innerStyle,
+        { paddingBottom: keyboardBottomOffset },
         ScrollViewProps?.contentContainerStyle,
         contentContainerStyle,
       ]}

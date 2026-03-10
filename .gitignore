@@ -3,6 +3,7 @@
 .DS_Store
 
 .env.*
+!.env.example
 
 # Xcode
 #
@@ -69,6 +70,7 @@ buck-out/
 .vscode
 
 # Expo
+.expo/
 .expo/*
 bin/Exponent.app
 /android

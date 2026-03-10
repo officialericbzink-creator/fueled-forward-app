@@ -4,7 +4,14 @@ import { useHeader } from "@/utils/useHeader"
 import { useAppTheme } from "@/theme/context"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { Button } from "@/components/Button"
-import { ScrollView, TextInput, View, ActivityIndicator, ViewStyle, TextStyle } from "react-native"
+import {
+  ScrollView,
+  TextInput,
+  View,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+} from "react-native"
 import { Text } from "@/components/Text"
 import { MoreHoriz, SendDiagonal } from "iconoir-react-native"
 import { useAuth } from "@/context/AuthContext"
@@ -16,6 +23,7 @@ import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage
 import { ChatMessage } from "@/services/api"
 import { useAIDisclosure } from "@/hooks/useAIDisclosure"
 import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 // import * as Notifications from "expo-notifications"
 
 interface AIChatScreenProps extends AppStackScreenProps<"AIChat"> {}
@@ -27,6 +35,7 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollViewRef = useRef<ScrollView>(null)
+  const insets = useSafeAreaInsets()
   const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
   const [showAIDisclosure, setShowAIDisclosure] = useState(false)
 
@@ -183,6 +192,9 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
       preset="auto"
       // keyboardShouldPersistTaps="handled"
       keyboardBottomOffset={0}
+      // Chat is a fixed footer layout; on Android (especially edge-to-edge) `height` often still
+      // leaves the composer behind the keyboard. Force `padding` here.
+      KeyboardAvoidingViewProps={{ behavior: "padding", enabled: true }}
     >
       <View style={{ flex: 1 }}>
         <ScrollView
@@ -191,6 +203,8 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: "flex-end",
+            // Ensure last message isn't obscured by the composer.
+            paddingBottom: spacing.lg + insets.bottom,
           }}
         >
           {messages.length === 0 && (
@@ -228,7 +242,13 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
           )}
         </ScrollView>
 
-        <View style={themed($textInputContainer)}>
+        <View
+          style={[
+            themed($textInputContainer),
+            // Ensure the composer sits above the home indicator on iOS and isn't clipped on Android.
+            { paddingBottom: Math.max(insets.bottom, spacing.sm) },
+          ]}
+        >
           <TextInput
             style={themed($textInput)}
             value={inputText}
@@ -238,6 +258,7 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
             onSubmitEditing={sendMessage}
             editable={connected && !isTyping}
             multiline
+            blurOnSubmit={false}
           />
           <Button
             onPress={sendMessage}
