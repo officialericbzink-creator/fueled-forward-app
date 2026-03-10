@@ -1,5 +1,7 @@
 import { ComponentType, FC, useMemo, useRef, useState } from "react"
 import { Pressable, TextInput, View, ViewStyle } from "react-native"
+import { usePostHog } from "posthog-react-native"
+import Toast from "react-native-toast-message"
 
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
@@ -12,7 +14,6 @@ import { ThemedStyle } from "@/theme/types"
 import { useHeader } from "@/utils/useHeader"
 
 import { authClient } from "../../lib/auth"
-import { usePostHog } from "posthog-react-native"
 
 interface SignUpScreenProps extends AppStackScreenProps<"SignUp"> {}
 
@@ -65,25 +66,63 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
 
       if (!authPassword || authPassword.length === 0) return
       if (authPassword.length < 6) return
-      if (authPassword !== confirmPassword) return
+      if (authPassword !== confirmPassword) {
+        Toast.show({
+          type: "error",
+          text1: "Passwords don't match",
+          text2: "Please make sure both password fields are the same.",
+        })
+        confirmPasswordInput.current?.focus()
+        return
+      }
       const response = await authClient.signUp.email({
         email: authEmail,
         password: authPassword,
         name: "Default User",
       })
       if (response.data) {
-        // On successful sign up, navigate to the Welcome screen
+        // On successful sign up, the auth state should flip and AppNavigator
+        // will mount the authenticated stack (which contains Onboarding).
         console.log(response.data)
         posthog.capture("sign_up", {
           method: "email",
           userId: response.data.user.id,
           timestamp: Date.now(),
         })
-        navigation.navigate("Onboarding")
+        // Avoid manual navigation to "Onboarding" here; it may not exist in the
+        // unauthenticated stack yet, and the navigator will switch automatically.
       } else {
         // Handle sign up failure (e.g., show an error message)
+        const code = (response.error as any)?.code as string | undefined
+        const message = response.error?.message || "An error occurred during sign up."
+        const normalized = `${code || ""} ${message}`.toLowerCase()
+
         console.error("Sign up failed:", response.error)
-        posthog.captureException(new Error("Sign up failed"))
+        posthog.captureException(new Error(message), {
+          ...(code ? { code } : {}),
+          context: "SignUpScreen.signUp",
+          timestamp: Date.now(),
+        })
+
+        if (
+          normalized.includes("already") &&
+          (normalized.includes("exist") ||
+            normalized.includes("registered") ||
+            normalized.includes("taken"))
+        ) {
+          Toast.show({
+            type: "error",
+            text1: "Account already exists",
+            text2: "Try signing in with this email instead.",
+          })
+          return
+        }
+
+        Toast.show({
+          type: "error",
+          text1: "Sign Up Failed",
+          text2: message,
+        })
       }
     } catch (error) {
       console.error("An error occurred during sign up:", error)

@@ -1,6 +1,7 @@
 import "./utils/gestureHandler"
 
 import { useCallback, useEffect, useState } from "react"
+import { Platform } from "react-native"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
@@ -8,7 +9,6 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { PostHogProvider } from "posthog-react-native"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
-import { Platform } from "react-native"
 
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 
@@ -20,6 +20,7 @@ import { customFontsToLoad } from "./theme/typography"
 import queryClient from "../lib/queryClient"
 import { SocketProvider } from "./context/AIChatContext"
 import { InAppSubscriptionProvider } from "./context/InAppSubscriptionContext"
+import { PaywallProvider } from "./context/PaywallContext"
 import { loadDateFnsLocale } from "./utils/formatDate"
 
 if (__DEV__) {
@@ -105,9 +106,11 @@ export function App() {
           <ThemeProvider>
             <AuthProvider>
               <InAppSubscriptionProvider>
-                <SocketProvider>
-                  <AppContent />
-                </SocketProvider>
+                <PaywallProvider>
+                  <SocketProvider>
+                    <AppContent />
+                  </SocketProvider>
+                </PaywallProvider>
               </InAppSubscriptionProvider>
             </AuthProvider>
             <ToastWrapper />

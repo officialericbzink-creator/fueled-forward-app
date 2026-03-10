@@ -1,11 +1,12 @@
 import { FC } from "react"
 import { ViewStyle } from "react-native"
-import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
+
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { useHeader } from "@/utils/useHeader"
-import { ThemedStyle } from "@/theme/types"
+import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
 import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
 // import { useNavigation } from "@react-navigation/native"
 
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsCheckIn"> {}

@@ -1,12 +1,14 @@
-import { Pressable, View, ViewStyle, ActivityIndicator, Linking } from "react-native"
-import { Text } from "../Text"
-import { useAppTheme } from "@/theme/context"
-import { ThemedStyle } from "@/theme/types"
 import { FC, useEffect, useState } from "react"
-import { Radio } from "../Toggle/Radio"
+import { Pressable, View, ViewStyle, ActivityIndicator, Linking } from "react-native"
+
 import { useSubscription } from "@/context/InAppSubscriptionContext"
 import type { PlanType } from "@/context/InAppSubscriptionContext"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
 import { BASE_WEB_URL } from "@/utils/constants"
+
+import { Text } from "../Text"
+import { Radio } from "../Toggle/Radio"
 
 interface OnboardingPaywallStepProps {
   onDataChange: (data: { paywallCompleted: boolean; planType?: PlanType }) => void

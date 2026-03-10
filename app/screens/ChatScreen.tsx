@@ -1,29 +1,23 @@
 import { FC, useEffect, useState, useRef } from "react"
-import { Screen } from "@/components/Screen"
-import { useHeader } from "@/utils/useHeader"
-import { useAppTheme } from "@/theme/context"
-import { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { Button } from "@/components/Button"
-import {
-  ScrollView,
-  TextInput,
-  View,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-} from "react-native"
-import { Text } from "@/components/Text"
+import { ScrollView, TextInput, View, ActivityIndicator, ViewStyle, TextStyle } from "react-native"
 import { MoreHoriz, SendDiagonal } from "iconoir-react-native"
-import { useAuth } from "@/context/AuthContext"
-import { useGetConversationHistory } from "@/hooks/chat/get-chat-history"
-import { ThemedStyle } from "@/theme/types"
-import { useSocket } from "@/context/AIChatContext"
+
 import Animated from "react-native-reanimated"
 import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
 import { ChatMessage } from "@/services/api"
 import { useAIDisclosure } from "@/hooks/useAIDisclosure"
 import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { Button } from "@/components/Button"
+import { Screen } from "@/components/Screen"
+import { Text } from "@/components/Text"
+import { useSocket } from "@/context/AIChatContext"
+import { useAuth } from "@/context/AuthContext"
+import { useGetConversationHistory } from "@/hooks/chat/get-chat-history"
+import { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
 // import * as Notifications from "expo-notifications"
 
 interface AIChatScreenProps extends AppStackScreenProps<"AIChat"> {}

@@ -10,6 +10,7 @@ import {
 } from "react-native"
 import { CheckCircle, Plus, User, Xmark } from "iconoir-react-native"
 
+import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
 import { Button } from "@/components/Button"
 import { Card } from "@/components/Card"
 import { Screen } from "@/components/Screen"
@@ -18,12 +19,14 @@ import { TextField } from "@/components/TextField"
 import { Checkbox } from "@/components/Toggle/Checkbox"
 import { useAuth } from "@/context/AuthContext"
 import { useSubscription } from "@/context/InAppSubscriptionContext"
+import { usePaywall } from "@/context/PaywallContext"
 import { useGetCheckInHistory } from "@/hooks/check-in/get-check-ins"
 import { useGetTodaysCheckIn } from "@/hooks/check-in/get-today-check-in"
 import { useDailyGoalsActions } from "@/hooks/goals/daily-goal-actions"
 import { useGetDailyGoals } from "@/hooks/goals/get-daily-goals"
 import { useGoalRecommendations } from "@/hooks/goals/get-goal-recommendations"
 import { useGetProfile } from "@/hooks/profile/get-profile"
+import { useAIDisclosure } from "@/hooks/useAIDisclosure"
 import { TxKeyPath } from "@/i18n"
 import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
 import { CheckInDetails } from "@/services/api/types"
@@ -31,15 +34,14 @@ import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { DEFAULT_AVATAR, MOOD_IMAGES } from "@/utils/constants"
 import { useHeader } from "@/utils/useHeader"
-import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
-import { useAIDisclosure } from "@/hooks/useAIDisclosure"
 
 interface HomeScreenProps extends HomeCheckInStackScreenProps<"HomeDashboard"> {}
 
 export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   const { user } = useAuth()
   const { data: profile, isLoading: profileLoading } = useGetProfile(user?.id || "")
-  const { checkForActiveSubscription, isInitialized, subscriptionDataLoaded } = useSubscription()
+  const { checkForActiveSubscription } = useSubscription()
+  const { openPaywall } = usePaywall()
   const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
   const [showAIDisclosure, setShowAIDisclosure] = useState(false)
 
@@ -83,13 +85,7 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
     [recommendationsData?.data],
   )
 
-  const isLoading =
-    checkInHistoryLoading ||
-    todaysCheckInLoading ||
-    goalsLoading ||
-    profileLoading ||
-    !isInitialized ||
-    !subscriptionDataLoaded
+  const isLoading = checkInHistoryLoading || todaysCheckInLoading || goalsLoading || profileLoading
 
   useEffect(() => {
     if (!hasAcceptedAIDisclosure && !isLoading) {
@@ -122,9 +118,9 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
     if (checkForActiveSubscription()) {
       setGoalModalOpen(true)
     } else {
-      navigation.navigate("SettingsMain", { screen: "SettingsSubscription" })
+      openPaywall({ source: "Premium", onSubscribed: () => setGoalModalOpen(true) })
     }
-  }, [checkForActiveSubscription, navigation])
+  }, [checkForActiveSubscription, openPaywall])
 
   const handleSubmitGoal = () => {
     if (goalText.trim()) {
@@ -210,9 +206,9 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
     if (checkForActiveSubscription()) {
       navigation.navigate("CheckIn")
     } else {
-      navigation.navigate("SettingsMain", { screen: "SettingsSubscription" })
+      openPaywall({ source: "Check-ins", onSubscribed: () => navigation.navigate("CheckIn") })
     }
-  }, [checkForActiveSubscription, navigation])
+  }, [checkForActiveSubscription, navigation, openPaywall])
 
   const renderDailyCheckInStatus = () => {
     if (todaysCheckInError) return <Text size="xs" tx="home:checkInCard.errorText" />

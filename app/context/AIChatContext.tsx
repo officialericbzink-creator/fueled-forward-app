@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react"
 import { io, Socket } from "socket.io-client"
-import { useAuth } from "./AuthContext"
+
 import Config from "@/config"
 import { posthog } from "@/utils/posthog"
+
+import { useAuth } from "./AuthContext"
 
 interface SocketContextValue {
   socket: Socket | null

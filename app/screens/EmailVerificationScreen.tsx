@@ -1,15 +1,16 @@
 import { FC, useEffect, useState } from "react"
 import { Pressable, View, ViewStyle } from "react-native"
 import { Mail, CheckCircle } from "iconoir-react-native"
+
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { authClient } from "@/lib/auth" // your auth client
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { useHeader } from "@/utils/useHeader"
-import { authClient } from "@/lib/auth" // your auth client
 import { DEEP_LINK_URL } from "@/utils/constants"
+import { useHeader } from "@/utils/useHeader"
 
 interface EmailVerificationScreenProps extends AppStackScreenProps<"EmailVerification"> {}
 

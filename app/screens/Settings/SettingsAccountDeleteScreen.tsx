@@ -1,19 +1,19 @@
 import { FC, useState } from "react"
 import { ViewStyle } from "react-native"
-import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+
+import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
 import { TextField } from "@/components/TextField"
 import { useAuth } from "@/context/AuthContext"
-import { colors } from "@/theme/colors"
-import { Button } from "@/components/Button"
-import { useAppTheme } from "@/theme/context"
 import { useDeleteProfile } from "@/hooks/profile/delete-profile"
+import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
+import { colors } from "@/theme/colors"
+import { useAppTheme } from "@/theme/context"
 // import { useNavigation } from "@react-navigation/native"
 
-interface SettingsAccountDeleteScreenProps
-  extends SettingsStackScreenProps<"SettingsAccountDelete"> {}
+interface SettingsAccountDeleteScreenProps extends SettingsStackScreenProps<"SettingsAccountDelete"> {}
 
 export const SettingsAccountDeleteScreen: FC<SettingsAccountDeleteScreenProps> = ({
   navigation,

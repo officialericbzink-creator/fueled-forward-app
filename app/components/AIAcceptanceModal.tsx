@@ -1,10 +1,11 @@
 import { FC } from "react"
 import { Modal, Pressable, View, ViewStyle, Linking, ScrollView } from "react-native"
-import { Text } from "@/components/Text"
+import { Xmark } from "iconoir-react-native"
+
 import { Button } from "@/components/Button"
+import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { Xmark } from "iconoir-react-native"
 
 interface AIDisclosureModalProps {
   visible: boolean

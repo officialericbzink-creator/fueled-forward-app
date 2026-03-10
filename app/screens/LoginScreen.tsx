@@ -1,20 +1,20 @@
 import { ComponentType, FC, useMemo, useRef, useState } from "react"
 import { Linking, Pressable, TextInput, View, ViewStyle } from "react-native"
+import Toast from "react-native-toast-message"
 
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField, TextFieldAccessoryProps } from "@/components/TextField"
+import Config from "@/config"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { posthog } from "@/utils/posthog"
+import { useHeader } from "@/utils/useHeader"
 
 import { authClient } from "../../lib/auth"
-import Toast from "react-native-toast-message"
-import { useHeader } from "@/utils/useHeader"
-import Config from "@/config"
-import { posthog } from "@/utils/posthog"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 

@@ -1,25 +1,30 @@
-import { useAppTheme } from "@/theme/context"
-import { ThemedStyle } from "@/theme/types"
-import { View, ViewStyle, Image, TouchableOpacity, Modal, Pressable } from "react-native"
-import { Screen } from "@/components/Screen"
-import { useHeader } from "@/utils/useHeader"
-import { Card } from "@/components/Card"
-import { Text } from "@/components/Text"
-import { FC, useEffect, useState } from "react"
-import { Button } from "@/components/Button"
-import { CheckInType } from "@/services/api/types"
+import { FC, useEffect, useMemo, useState } from "react"
+import { View, ViewStyle, Image, TouchableOpacity, Modal, Pressable, InteractionManager } from "react-native"
 import { ArrowLeftTag, NavArrowLeft } from "iconoir-react-native"
-import { ProgressBar } from "@/components/ProgressBar"
-import { TextField } from "@/components/TextField"
+
 import { MOOD_IMAGES, NUM_STEPS, STEP_QUESTIONS, MOOD_OPTIONS, AVG_MOOD } from "@/utils/constants"
 import { useCreateCheckIn } from "@/hooks/check-in/create-check-in"
 import Toast from "react-native-toast-message"
+import { Button } from "@/components/Button"
+import { Card } from "@/components/Card"
+import { ProgressBar } from "@/components/ProgressBar"
+import { Screen } from "@/components/Screen"
+import { Text } from "@/components/Text"
+import { TextField } from "@/components/TextField"
 import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
+import { CheckInType } from "@/services/api/types"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
+import { storage } from "@/utils/storage"
+import { promptToReviewAsync } from "@/utils/useStoreReviewRequest"
+import { useAuth } from "@/context/AuthContext"
 
 interface CheckInScreenProps extends HomeCheckInStackScreenProps<"CheckIn"> {}
 
 export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
   const { mutateAsync, isPending } = useCreateCheckIn()
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [checkInFormState, setCheckInFormState] = useState<CheckInType>({
     overallMood: undefined,
@@ -28,6 +33,29 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
   })
   const [modalVisible, setModalVisible] = useState(false)
   const [notesText, setNotesText] = useState("")
+  const [checkInJustSubmitted, setCheckInJustSubmitted] = useState(false)
+
+  const shouldOfferReview = useMemo(() => {
+    // Check-in is only reachable post-onboarding, but keep this guard as a safety net.
+    return !!user?.completedOnboarding
+  }, [user?.completedOnboarding])
+
+  const maybePromptReviewAfterFirstCheckIn = () => {
+    if (!shouldOfferReview) return
+    if (!checkInJustSubmitted) return
+
+    const key = "storeReviewRequestedAfterFirstCheckin_v1"
+    if (storage.getBoolean(key)) return
+
+    // Set immediately to avoid double prompts if user taps quickly.
+    storage.set(key, true)
+
+    InteractionManager.runAfterInteractions(() => {
+      promptToReviewAsync().catch(() => {
+        // Never block the user flow on review prompting.
+      })
+    })
+  }
 
   const {
     themed,
@@ -96,6 +124,7 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
     try {
       await mutateAsync(data)
       setCheckInFormState((prev) => ({ ...prev, overallMood: data.overallMood }))
+      setCheckInJustSubmitted(true)
       setModalVisible(true)
     } catch (error) {
       // Show error toast - adjust this based on your toast library
@@ -329,6 +358,7 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
               onPress={() => {
                 setModalVisible(false)
                 navigation.navigate("HomeDashboard")
+                maybePromptReviewAfterFirstCheckIn()
               }}
             />
             <Button
@@ -340,6 +370,7 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
                 navigation.navigate("Resources", {
                   screen: "ResourcesHome",
                 })
+                maybePromptReviewAfterFirstCheckIn()
               }}
             />
           </Pressable>

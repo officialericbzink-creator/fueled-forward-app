@@ -11,18 +11,18 @@ import {
   Clock,
   UserXmark,
 } from "iconoir-react-native"
+import Toast from "react-native-toast-message"
 
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { useAuth } from "@/context/AuthContext"
+import { useClearConversation } from "@/hooks/chat/clear-chat-history"
 import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { useHeader } from "@/utils/useHeader"
-import { useClearConversation } from "@/hooks/chat/clear-chat-history"
-import Toast from "react-native-toast-message"
 import { BASE_WEB_URL } from "@/utils/constants"
+import { useHeader } from "@/utils/useHeader"
 // import { useNavigation } from "@react-navigation/native"
 
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsMenu"> {}

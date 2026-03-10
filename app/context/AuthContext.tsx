@@ -2,8 +2,9 @@ import { createContext, FC, PropsWithChildren, useContext, useCallback, useEffec
 import { useQueryClient } from "@tanstack/react-query"
 import { SessionQueryParams } from "better-auth/types"
 
-import { authClient } from "../../lib/auth"
 import { posthog } from "@/utils/posthog"
+
+import { authClient } from "../../lib/auth"
 
 export type AuthContextType = {
   // Session data

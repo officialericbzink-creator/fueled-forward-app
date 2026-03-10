@@ -5,31 +5,28 @@
  * and a "main" flow which the user will use once logged in.
  */
 import { ComponentProps } from "react"
+import * as Linking from "expo-linking"
 import {
   NavigationContainer,
   NavigatorScreenParams,
-  useNavigation,
   LinkingOptions,
-  getStateFromPath,
 } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
-import * as Linking from "expo-linking"
-import { useEffect } from "react"
 
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { AuthNavigator, AuthNavigatorParamList } from "@/navigators/AuthNavigator"
+import { AIChatScreen } from "@/screens/ChatScreen"
+import { EmailVerificationScreen } from "@/screens/EmailVerificationScreen"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
+import { OnboardingScreen } from "@/screens/OnboardingScreen"
 import { SignUpScreen } from "@/screens/SignUpScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
-import { AIChatScreen } from "@/screens/ChatScreen"
-import { EmailVerificationScreen } from "@/screens/EmailVerificationScreen"
 import { SettingsNavigator, SettingsNavigatorParamList } from "./SettingsNavigator"
-import { OnboardingScreen } from "@/screens/OnboardingScreen"
 
 const prefix = Linking.createURL("/")
 
@@ -129,8 +126,9 @@ const AppStack = () => {
   )
 }
 
-export interface NavigationProps
-  extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
+export interface NavigationProps extends Partial<
+  ComponentProps<typeof NavigationContainer<AppStackParamList>>
+> {}
 
 export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()
@@ -138,7 +136,12 @@ export const AppNavigator = (props: NavigationProps) => {
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   return (
-    <NavigationContainer linking={linking} ref={navigationRef} theme={navigationTheme} {...props}>
+    <NavigationContainer
+      linking={linking}
+      ref={navigationRef}
+      theme={navigationTheme}
+      {...props}
+    >
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
       </ErrorBoundary>

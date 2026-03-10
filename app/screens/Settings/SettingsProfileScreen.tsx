@@ -12,24 +12,23 @@ import * as FileSystem from "expo-file-system"
 import * as ImagePicker from "expo-image-picker"
 import Toast from "react-native-toast-message"
 
-import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
-import { Screen } from "@/components/Screen"
-import { Text } from "@/components/Text"
-import { useHeader } from "@/utils/useHeader"
-import { ThemedStyle } from "@/theme/types"
-import { useAppTheme } from "@/theme/context"
-import { useAuth } from "@/context/AuthContext"
-import { TextField } from "@/components/TextField"
-import { Checkbox } from "@/components/Toggle/Checkbox"
-import { useGetProfile } from "@/hooks/profile/get-profile"
 import {
   profileFormReducer,
   initialFormState,
   ProfileFormActionType,
 } from "@/reducers/profile-form-reducer"
 import { Button } from "@/components/Button"
+import { Screen } from "@/components/Screen"
+import { Text } from "@/components/Text"
+import { TextField } from "@/components/TextField"
+import { Checkbox } from "@/components/Toggle/Checkbox"
+import { useAuth } from "@/context/AuthContext"
+import { useGetProfile } from "@/hooks/profile/get-profile"
 import { useUpdateProfile } from "@/hooks/profile/update-profile"
 import { useUploadAvatar } from "@/hooks/profile/upload-avatar"
+import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
 import {
   AVATAR_ALLOWED_MIME_TYPES,
   DEFAULT_AVATAR,
@@ -37,6 +36,7 @@ import {
   STRUGGLE_OPTIONS,
   avatarExtensionForMimeType,
 } from "@/utils/constants"
+import { useHeader } from "@/utils/useHeader"
 // import { useNavigation } from "@react-navigation/native"
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsProfile"> {}
 

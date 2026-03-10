@@ -1,22 +1,21 @@
 import React, { FC, useRef, useMemo, useCallback, useEffect } from "react"
 import { FlatList, ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { Filter, Search } from "iconoir-react-native"
 import BottomSheet, { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
+import { Filter, Search } from "iconoir-react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { Card } from "@/components/Card"
+import FilterBottomSheet, { FilterState } from "@/components/ResourceFilterSheet"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { useGetResourceCategories } from "@/hooks/resources/get-resource-categories"
+import { useGetResources } from "@/hooks/resources/get-resource-list"
 import { ResourcesStackScreenProps } from "@/navigators/ResourcesNavigator"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-
-import FilterBottomSheet, { FilterState } from "@/components/ResourceFilterSheet"
 import { resourceTypeColors } from "@/utils/constants"
-import { useGetResources } from "@/hooks/resources/get-resource-list"
-import { useGetResourceCategories } from "@/hooks/resources/get-resource-categories"
 
 interface ResourcesHomeScreenProps extends ResourcesStackScreenProps<"ResourcesHome"> {}
 

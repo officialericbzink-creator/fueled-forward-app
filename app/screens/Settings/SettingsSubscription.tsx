@@ -8,18 +8,18 @@ import {
   Alert,
   Linking,
 } from "react-native"
-import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
+
+import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { Button } from "@/components/Button"
-import { useHeader } from "@/utils/useHeader"
-import { ThemedStyle } from "@/theme/types"
-import { useAppTheme } from "@/theme/context"
 import { Radio } from "@/components/Toggle/Radio"
-
 import { useSubscription } from "@/context/InAppSubscriptionContext"
 import type { PlanType } from "@/context/InAppSubscriptionContext"
+import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
 import { BASE_WEB_URL } from "@/utils/constants"
+import { useHeader } from "@/utils/useHeader"
 
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsSubscription"> {}
 
@@ -55,13 +55,23 @@ export const SettingsSubscriptionScreen: FC<SettingsMenuScreenProps> = ({ naviga
     }
   }, [isInitialized, refreshSubscriptionStatus])
 
-  const calculateYearlyTotal = (monthlyPrice: string): string => {
-    const match = monthlyPrice.match(/\d+\.?\d*/)
-    if (!match) return ""
-
-    const price = parseFloat(match[0])
-    const yearlyTotal = (price * 12).toFixed(2)
-    return `$${yearlyTotal}/yr`
+  const formatCurrency = (
+    amount: number,
+    currencyCode?: string | null,
+    fallbackPriceString?: string,
+  ) => {
+    try {
+      if (currencyCode && typeof Intl !== "undefined" && typeof Intl.NumberFormat === "function") {
+        return new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency: currencyCode,
+        }).format(amount)
+      }
+    } catch {
+      // ignore and fall back below
+    }
+    const symbol = (fallbackPriceString || "").match(/^[^\d]+/)?.[0] || ""
+    return `${symbol}${amount.toFixed(2)}`
   }
 
   const handleRestorePurchases = async () => {
@@ -315,7 +325,15 @@ export const SettingsSubscriptionScreen: FC<SettingsMenuScreenProps> = ({ naviga
               {yearlyPackage && (
                 <Text
                   size="xxs"
-                  text={calculateYearlyTotal(monthlyPackage.price)}
+                  text={
+                    monthlyPackage.product.priceNumber
+                      ? `${formatCurrency(
+                          monthlyPackage.product.priceNumber * 12,
+                          monthlyPackage.product.currencyCode,
+                          monthlyPackage.price,
+                        )}/yr`
+                      : ""
+                  }
                   style={{ color: theme.colors.textDim }}
                 />
               )}

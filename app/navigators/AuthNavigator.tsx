@@ -4,14 +4,15 @@ import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/n
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { CustomTabBar } from "@/components/CustomTabBar"
+import { CheckInProvider } from "@/context/CheckInContext"
 import { AppStackParamList, AppStackScreenProps } from "@/navigators/AppNavigator"
 import { ResourcesNavigator, ResourcesNavigatorParamList } from "@/navigators/ResourcesNavigator"
+import { AIChatScreen } from "@/screens/ChatScreen"
 import { HomeScreen } from "@/screens/HomeScreen"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { CheckInProvider } from "@/context/CheckInContext"
+
 import { HomeCheckInNavigator } from "./CheckInNavigator"
-import { AIChatScreen } from "@/screens/ChatScreen"
 
 export type AuthNavigatorParamList = {
   Home: undefined

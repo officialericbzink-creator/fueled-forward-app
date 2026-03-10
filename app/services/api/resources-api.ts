@@ -1,5 +1,6 @@
 // services/api/clients/resources-api.ts
 import { posthog } from "@/utils/posthog"
+
 import { BaseApi } from "./base-api"
 import type { StrapiResource, StrapiResourceCategory, StrapiResponse } from "./types"
 

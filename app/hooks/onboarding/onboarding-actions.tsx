@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import Toast from "react-native-toast-message"
 
 import { onboardingApi } from "@/services/api"
 import { OnboardingStepData } from "@/services/api/types"
-import Toast from "react-native-toast-message"
 
 export const useSubmitOnboardingStep = () => {
   const queryClient = useQueryClient()

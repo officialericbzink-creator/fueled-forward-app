@@ -1,6 +1,7 @@
 // screens/OnboardingScreen.tsx
-import { FC, useEffect, useState, useRef, useCallback } from "react"
+import { FC, useEffect, useLayoutEffect, useState, useRef, useCallback } from "react"
 import { ViewStyle, View, ActivityIndicator, Pressable } from "react-native"
+import { CommonActions } from "@react-navigation/native"
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,26 +9,26 @@ import Animated, {
   Easing,
   runOnJS,
 } from "react-native-reanimated"
-import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+
+import { Button } from "@/components/Button"
+import { OnboardingFinishStep } from "@/components/Onboarding/OnboardingFinishStep"
+import { Step2ImportantDate } from "@/components/Onboarding/OnboardingImportantDate"
+import { Step0Name } from "@/components/Onboarding/OnboardingNameStep"
+import { Step5Biometric } from "@/components/Onboarding/OnboardingSecurity"
+import { Step1Struggles } from "@/components/Onboarding/OnboardingStrugglesStep"
+import { Step3Therapy } from "@/components/Onboarding/OnboardingTherapy"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { Button } from "@/components/Button"
-import { useHeader } from "@/utils/useHeader"
-import { useAuth } from "@/context/AuthContext"
+import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
+import { useAuth } from "@/context/AuthContext"
 import { useGetOnboardingStatus } from "@/hooks/onboarding/get-onboarding-status"
 import {
   useCompleteOnboarding,
   useSubmitOnboardingStep,
 } from "@/hooks/onboarding/onboarding-actions"
-import { Step0Name } from "@/components/Onboarding/OnboardingNameStep"
-import { Step1Struggles } from "@/components/Onboarding/OnboardingStrugglesStep"
-import { Step2ImportantDate } from "@/components/Onboarding/OnboardingImportantDate"
-import { Step3Therapy } from "@/components/Onboarding/OnboardingTherapy"
-import { Step5Biometric } from "@/components/Onboarding/OnboardingSecurity"
-import { OnboardingPaywallStep } from "@/components/Onboarding/OnboardingPaywall"
-import { CommonActions } from "@react-navigation/native"
 // Import other step components as we create them
 
 interface OnboardingScreenProps extends AppStackScreenProps<"Onboarding"> {}
@@ -98,8 +99,9 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
     }
   }, [onboardingStatus?.completedOnboarding, navigation])
 
-  // Reset step data and validation when step changes
-  useEffect(() => {
+  // Reset step data and validation when step changes.
+  // Use layout effect so this runs before children `useEffect` that set validity.
+  useLayoutEffect(() => {
     setStepData(null)
     setIsStepValid(false)
   }, [currentStep])
@@ -255,7 +257,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
         )
       case 4:
         return (
-          <OnboardingPaywallStep
+          <OnboardingFinishStep
             onDataChange={handleDataChange} // ← Use memoized callback
             onValidationChange={handleValidationChange}
           />

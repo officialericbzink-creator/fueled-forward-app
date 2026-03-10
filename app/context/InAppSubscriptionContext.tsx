@@ -8,10 +8,10 @@ import {
   useCallback,
 } from "react"
 import { Linking, Platform } from "react-native"
+import { usePostHog } from "posthog-react-native"
 import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesPackage } from "react-native-purchases"
 
 import { useAuth } from "./AuthContext"
-import { usePostHog } from "posthog-react-native"
 
 // Subscription status types
 export type SubscriptionStatus = "active" | "trial" | "expired" | "none"
@@ -56,6 +56,8 @@ export interface OfferingPackage {
     identifier: string
     title: string
     description: string
+    currencyCode?: string | null
+    priceNumber?: number | null
   }
 }
 
@@ -242,6 +244,27 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
       expirationDate: entitlement.willRenew ? null : formatDate(entitlement.expirationDate),
       isSubscribed: true,
     }
+  }
+
+  const formatCurrency = (
+    amount: number,
+    currencyCode: string | null | undefined,
+    fallbackPriceString?: string,
+  ): string => {
+    try {
+      if (currencyCode && typeof Intl !== "undefined" && typeof Intl.NumberFormat === "function") {
+        return new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency: currencyCode,
+        }).format(amount)
+      }
+    } catch {
+      // ignore and fall back below
+    }
+
+    // Fallback: keep any leading non-digit chars from the localized priceString (e.g. "₱")
+    const symbol = (fallbackPriceString || "").match(/^[^\d]+/)?.[0] || ""
+    return `${symbol}${amount.toFixed(2)}`
   }
 
   const identifyPlanType = (pkg: PurchasesPackage): PlanType | null => {
@@ -432,9 +455,12 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
               // Calculate price per month for annual
               let pricePerMonth = price
-              if (isYearly && pkg.product.price) {
-                const monthlyPrice = pkg.product.price / 12
-                pricePerMonth = `$${monthlyPrice.toFixed(2)}/mo`
+              const currencyCode = (pkg.product as any)?.currencyCode as string | undefined
+              const priceNumber =
+                typeof pkg.product.price === "number" ? pkg.product.price : undefined
+              if (isYearly && typeof priceNumber === "number") {
+                const monthlyPrice = priceNumber / 12
+                pricePerMonth = `${formatCurrency(monthlyPrice, currencyCode, price)}/mo`
               }
 
               return {
@@ -446,6 +472,8 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
                   identifier: pkg.product.identifier,
                   title: pkg.product.title,
                   description: pkg.product.description,
+                  currencyCode: currencyCode ?? null,
+                  priceNumber: typeof priceNumber === "number" ? priceNumber : null,
                 },
               }
             })

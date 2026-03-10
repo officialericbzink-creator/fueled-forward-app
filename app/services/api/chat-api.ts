@@ -1,4 +1,5 @@
 import { posthog } from "@/utils/posthog"
+
 import { BaseApi } from "./base-api"
 import type { ConversationHistoryResponse } from "./types"
 

@@ -2,15 +2,16 @@
 import React, { useMemo, forwardRef, useCallback } from "react"
 import { View, ViewStyle, TouchableOpacity } from "react-native"
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from "@gorhom/bottom-sheet"
-import { Checkbox } from "@/components/Toggle/Checkbox"
-import { Text } from "@/components/Text"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+
 import { Button } from "@/components/Button"
+import { Text } from "@/components/Text"
+import { Checkbox } from "@/components/Toggle/Checkbox"
+import { StrapiResource, StrapiResourceCategory } from "@/services/api/types"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { resourceCategories, resourceTypes, resources } from "../../lib/mockData/resources"
 
-import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { StrapiResource, StrapiResourceCategory } from "@/services/api/types"
+import { resourceCategories, resourceTypes, resources } from "../../lib/mockData/resources"
 
 const READ_TIME_OPTIONS = ["5 min", "10 min", "15+ min"] as const
 
