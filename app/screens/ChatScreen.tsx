@@ -22,6 +22,9 @@ import { useHeader } from "@/utils/useHeader"
 
 interface AIChatScreenProps extends AppStackScreenProps<"AIChat"> {}
 
+const DISCLAIMER_MESSAGE =
+  "This app is not a replacement for therapy or mental health professionals. It is intended to support you on your wellness journey - offering a space to reflect, track your feelings, and find encouragement."
+
 export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const { session } = useAuth()
   const { socket, connected, markAsRead } = useSocket()
@@ -29,6 +32,7 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollViewRef = useRef<ScrollView>(null)
+  const pendingDisclaimerCountRef = useRef(0)
   const insets = useSafeAreaInsets()
   const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
   const [showAIDisclosure, setShowAIDisclosure] = useState(false)
@@ -66,20 +70,38 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   useEffect(() => {
     if (!socket) return
 
-    const handleTyping = (data) => {
+    const handleTyping = (data: { typing: boolean }) => {
       setTimeout(() => setIsTyping(data.typing), data.typing ? 500 : 0)
     }
 
-    const handleMessageResponse = (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: data.messageId,
-          role: "assistant",
-          content: data.content,
-          createdAt: data.timestamp,
-        },
-      ])
+    const handleMessageResponse = (data: {
+      messageId: string
+      content: string
+      timestamp: string
+    }) => {
+      setMessages((prev) => {
+        const next: ChatMessage[] = [
+          ...prev,
+          {
+            id: data.messageId,
+            role: "assistant",
+            content: data.content,
+            createdAt: data.timestamp,
+          },
+        ]
+
+        if (pendingDisclaimerCountRef.current > 0) {
+          pendingDisclaimerCountRef.current -= 1
+          next.push({
+            id: `local-disclaimer-${Date.now()}`,
+            role: "assistant",
+            content: DISCLAIMER_MESSAGE,
+            createdAt: new Date().toISOString(),
+          })
+        }
+
+        return next
+      })
     }
 
     socket.on("typing", handleTyping)
@@ -128,12 +150,22 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     if (!inputText.trim() || !session?.user?.id) return
 
     const userMessage = {
+      id: `local-${Date.now()}`,
       role: "user" as const,
       content: inputText,
       createdAt: new Date().toISOString(),
     }
 
-    setMessages((prev) => [...prev, userMessage])
+    setMessages((prev) => {
+      const next = [...prev, userMessage]
+
+      const nextUserMessageCount = next.reduce((count, msg) => (msg.role === "user" ? count + 1 : count), 0)
+      if (nextUserMessageCount % 10 === 0) {
+        pendingDisclaimerCountRef.current += 1
+      }
+
+      return next
+    })
 
     socket?.emit("sendMessage", {
       userId: session.user.id,
@@ -151,8 +183,8 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     titleContainerStyle: {
       width: "100%",
       flexDirection: "row",
-      justifyContent: "flex-start",
-      marginLeft: 20,
+      justifyContent: "center",
+      alignItems: "center",
       gap: spacing.sm,
     },
     titleImage: require("../../assets/images/eric-face.png"),
@@ -217,16 +249,31 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
           )}
 
           {messages.map((msg, index) => (
-            <View
-              key={msg.id || index}
-              style={msg.role === "user" ? themed($userMessage) : themed($ericMessage)}
-            >
-              <Text
-                style={msg.role === "user" ? themed($userMessageText) : themed($ericMessageText)}
-              >
-                {msg.content}
-              </Text>
-            </View>
+            (() => {
+              const isDisclaimer =
+                msg.id?.startsWith("local-disclaimer-") || msg.content === DISCLAIMER_MESSAGE
+
+              if (isDisclaimer) {
+                return (
+                  <View key={msg.id || index} style={themed($disclaimerBanner)}>
+                    <Text style={themed($disclaimerText)}>{msg.content}</Text>
+                  </View>
+                )
+              }
+
+              return (
+                <View
+                  key={msg.id || index}
+                  style={msg.role === "user" ? themed($userMessage) : themed($ericMessage)}
+                >
+                  <Text
+                    style={msg.role === "user" ? themed($userMessageText) : themed($ericMessageText)}
+                  >
+                    {msg.content}
+                  </Text>
+                </View>
+              )
+            })()
           ))}
 
           {isTyping && (
@@ -302,6 +349,24 @@ const $userMessage: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
 
 const $userMessageText: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.palette.primary900,
+})
+
+const $disclaimerBanner: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  marginVertical: spacing.xs,
+  borderRadius: 12,
+  backgroundColor: colors.palette.neutral200,
+  borderWidth: 1,
+  borderColor: colors.palette.neutral400,
+  alignSelf: "center",
+  maxWidth: "95%",
+})
+
+const $disclaimerText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.palette.neutral800,
+  lineHeight: 16,
+  textAlign: "center",
 })
 
 const $sendButton: ThemedStyle<ViewStyle> = () => ({

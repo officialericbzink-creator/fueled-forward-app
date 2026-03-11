@@ -18,7 +18,7 @@ import { $styles } from "@/theme/styles"
 import type { ThemedStyle } from "@/theme/types"
 import { ExtendedEdge, useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 
-import { IconTypes, PressableIcon } from "./Icon"
+import { Icon, IconTypes, PressableIcon } from "./Icon"
 import { Text, TextProps } from "./Text"
 
 export interface HeaderProps {
@@ -256,6 +256,7 @@ function HeaderAction(props: HeaderActionProps) {
   const { themed } = useAppTheme()
 
   const content = tx ? translate(tx, txOptions) : text
+  const backLabel = icon === "back" ? translate("common:back") : undefined
 
   if (ActionComponent) return ActionComponent
 
@@ -268,6 +269,25 @@ function HeaderAction(props: HeaderActionProps) {
         activeOpacity={0.8}
       >
         <Text weight="medium" size="md" text={content} style={themed($actionText)} />
+      </TouchableOpacity>
+    )
+  }
+
+  if (icon === "back" && backLabel) {
+    return (
+      <TouchableOpacity
+        style={themed([$actionBackContainer, { backgroundColor }])}
+        onPress={onPress}
+        disabled={!onPress}
+        activeOpacity={0.8}
+      >
+        <Icon
+          icon="back"
+          color={iconColor}
+          size={24}
+          style={isRTL ? { transform: [{ rotate: "180deg" }] } : {}}
+        />
+        <Text weight="medium" size="md" text={backLabel} style={themed($actionText)} />
       </TouchableOpacity>
     )
   }
@@ -308,6 +328,17 @@ const $actionTextContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   justifyContent: "center",
   height: "100%",
   paddingHorizontal: spacing.md,
+  zIndex: 2,
+})
+
+const $actionBackContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexGrow: 0,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "100%",
+  paddingHorizontal: spacing.md,
+  gap: spacing.xs,
   zIndex: 2,
 })
 
