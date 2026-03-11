@@ -8,7 +8,7 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import * as FileSystem from "expo-file-system"
+import * as FileSystem from "expo-file-system/legacy"
 import * as ImagePicker from "expo-image-picker"
 import Toast from "react-native-toast-message"
 

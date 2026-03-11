@@ -28,10 +28,24 @@ interface FilterBottomSheetProps {
   category: string
   categories: StrapiResourceCategory[]
   resourcesData: StrapiResource[] | undefined
+  recommendedCategories?: string[]
+  recommendedTabKey?: string
 }
 
 const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
-  ({ filters, onApplyFilters, searchText, category, resourcesData, categories }, ref) => {
+  (
+    {
+      filters,
+      onApplyFilters,
+      searchText,
+      category,
+      resourcesData,
+      categories,
+      recommendedCategories = [],
+      recommendedTabKey,
+    },
+    ref,
+  ) => {
     const snapPoints = useMemo(() => ["50%", "85%"], [])
     const [tempFilters, setTempFilters] = React.useState<FilterState>(filters)
     const insets = useSafeAreaInsets()
@@ -45,38 +59,8 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
       setTempFilters(filters)
     }, [filters])
 
-    // Calculate result count based on temp filters (live preview)
-    const resultCount = useMemo(() => {
-      if (!resourcesData) return 0
-
-      return resourcesData.filter((resource) => {
-        const matchesSearchText = searchText
-          ? resource.title.toLowerCase().includes(searchText.toLowerCase()) ||
-            resource.summary.toLowerCase().includes(searchText.toLowerCase())
-          : true
-
-        const matchesCategory = category === "All" || resource.category.name === category
-
-        const matchesFilterCategory =
-          tempFilters.categories.length === 0 ||
-          tempFilters.categories.includes(resource.category.name)
-
-        const matchesFilterType =
-          tempFilters.types.length === 0 || tempFilters.types.includes(resource.resource_type.name)
-
-        const matchesFilterReadTime =
-          tempFilters.readTimes.length === 0 ||
-          tempFilters.readTimes.includes(resource.read_time.name)
-
-        return (
-          matchesSearchText &&
-          matchesCategory &&
-          matchesFilterCategory &&
-          matchesFilterType &&
-          matchesFilterReadTime
-        )
-      }).length
-    }, [tempFilters, searchText, category, resourcesData])
+    // Note: with server-side pagination/filtering, we can't reliably preview
+    // the *total* result count here without another API call.
 
     const handleClearAll = useCallback(() => {
       setTempFilters({
@@ -160,7 +144,9 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
           <View style={themed($section)}>
             <Text tx="resources:filter.categoryText" preset="subheading" size="md" />
             <View style={themed($checkboxGroup)}>
-              {categories.slice(1).map((category) => (
+              {categories
+                .filter((c) => c.name.trim().toLowerCase() !== "all")
+                .map((category) => (
                 <Checkbox
                   key={category.id}
                   label={category.name}
@@ -204,7 +190,7 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
           {/* Footer Button */}
           <View style={themed($footer)}>
             <Button
-              text={`See ${resultCount} Result${resultCount !== 1 ? "s" : ""}`}
+              text="Apply filters"
               onPress={handleApply}
               style={{ width: "100%" }}
             />

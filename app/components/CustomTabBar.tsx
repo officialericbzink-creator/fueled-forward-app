@@ -75,6 +75,7 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
             <ChatLinesSolid color="#fff" height={32} width={32} />
             {unreadCount > 0 && <View style={themed($badge)}></View>}
           </View>
+          <Text style={{ fontSize: 10, lineHeight: 15, marginTop: 2 }}>Chat</Text>
         </TouchableOpacity>
 
         {/* Resources Tab */}
