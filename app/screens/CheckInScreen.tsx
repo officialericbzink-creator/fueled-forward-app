@@ -1,24 +1,32 @@
 import { FC, useEffect, useMemo, useState } from "react"
-import { View, ViewStyle, Image, TouchableOpacity, Modal, Pressable, InteractionManager } from "react-native"
+import {
+  View,
+  ViewStyle,
+  Image,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  InteractionManager,
+} from "react-native"
 import { ArrowLeftTag, NavArrowLeft } from "iconoir-react-native"
-
-import { MOOD_IMAGES, NUM_STEPS, STEP_QUESTIONS, MOOD_OPTIONS, AVG_MOOD } from "@/utils/constants"
-import { useCreateCheckIn } from "@/hooks/check-in/create-check-in"
 import Toast from "react-native-toast-message"
+
 import { Button } from "@/components/Button"
 import { Card } from "@/components/Card"
 import { ProgressBar } from "@/components/ProgressBar"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { useAuth } from "@/context/AuthContext"
+import { useCreateCheckIn } from "@/hooks/check-in/create-check-in"
 import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
 import { CheckInType } from "@/services/api/types"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { useHeader } from "@/utils/useHeader"
+import { MOOD_IMAGES, NUM_STEPS, STEP_QUESTIONS, MOOD_OPTIONS, AVG_MOOD } from "@/utils/constants"
 import { storage } from "@/utils/storage"
+import { useHeader } from "@/utils/useHeader"
 import { promptToReviewAsync } from "@/utils/useStoreReviewRequest"
-import { useAuth } from "@/context/AuthContext"
 
 interface CheckInScreenProps extends HomeCheckInStackScreenProps<"CheckIn"> {}
 

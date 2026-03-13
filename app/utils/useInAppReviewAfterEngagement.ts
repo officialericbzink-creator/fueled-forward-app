@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react"
-import { NavigationState } from "@react-navigation/native"
 import { InteractionManager } from "react-native"
+import { NavigationState } from "@react-navigation/native"
 
 import { getActiveRouteName } from "@/navigators/navigationUtilities"
 import { storage } from "@/utils/storage"

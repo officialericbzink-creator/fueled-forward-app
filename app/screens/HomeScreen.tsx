@@ -1,14 +1,16 @@
 import { FC, useCallback, useEffect, useMemo, useState } from "react"
 import {
   Image,
+  ImageStyle,
   Modal,
   Pressable,
   ScrollView,
   TouchableOpacity,
   View,
+  TextStyle,
   ViewStyle,
 } from "react-native"
-import { CheckCircle, Plus, User, Xmark } from "iconoir-react-native"
+import { CheckCircle, Plus, Xmark } from "iconoir-react-native"
 
 import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
 import { Button } from "@/components/Button"
@@ -32,7 +34,7 @@ import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
 import { CheckInDetails } from "@/services/api/types"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { DEFAULT_AVATAR, MOOD_IMAGES } from "@/utils/constants"
+import { AVG_MOOD, MOOD_IMAGES, MOOD_OPTIONS, STEP_QUESTIONS } from "@/utils/constants"
 import { useHeader } from "@/utils/useHeader"
 
 interface HomeScreenProps extends HomeCheckInStackScreenProps<"HomeDashboard"> {}
@@ -47,6 +49,9 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
 
   const [goalModalOpen, setGoalModalOpen] = useState(false)
   const [goalText, setGoalText] = useState("")
+
+  const [checkInDetailsModalOpen, setCheckInDetailsModalOpen] = useState(false)
+  const [selectedCheckIn, setSelectedCheckIn] = useState<CheckInDetails | null>(null)
 
   const {
     themed,
@@ -179,16 +184,25 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
           contentContainerStyle={{ flexDirection: "row", gap: spacing.xs, marginTop: spacing.lg }}
         >
           {checkInHistory.data.map((checkIn: CheckInDetails) => (
-            <View style={themed($checkInChip)} key={checkIn.date}>
-              <Image
-                source={MOOD_IMAGES[checkIn.overallMood || 3]}
-                style={{ height: 30, width: 30 }}
-              />
-              <Text
-                text={renderCheckInHistoryDate(checkIn.date)}
-                style={{ fontSize: 8, lineHeight: 8 }}
-              />
-            </View>
+            <TouchableOpacity
+              key={checkIn.id}
+              onPress={() => {
+                setSelectedCheckIn(checkIn)
+                setCheckInDetailsModalOpen(true)
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={themed($checkInChip)}>
+                <Image
+                  source={MOOD_IMAGES[checkIn.overallMood || 3]}
+                  style={{ height: 30, width: 30 }}
+                />
+                <Text
+                  text={renderCheckInHistoryDate(checkIn.date)}
+                  style={{ fontSize: 8, lineHeight: 8 }}
+                />
+              </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )
@@ -522,6 +536,110 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
           }
         />
       </Screen>
+
+      {/* Check-in Details Modal */}
+      <Modal visible={checkInDetailsModalOpen} animationType="fade" transparent>
+        <View style={themed($checkInDetailsModalContainer)}>
+          <Pressable
+            style={themed($checkInDetailsBackdrop)}
+            onPress={() => {
+              setCheckInDetailsModalOpen(false)
+              setSelectedCheckIn(null)
+            }}
+          />
+          <Card
+            style={themed($checkInDetailsCard)}
+            HeadingComponent={
+              <View style={themed($centeredSpacedRow)}>
+                <View>
+                  <Text size="sm" weight="semiBold" text="Check-in details" />
+                  {selectedCheckIn?.date ? (
+                    <Text
+                      size="xxs"
+                      text={new Date(selectedCheckIn.date).toDateString()}
+                      style={themed($checkInDetailsDateText)}
+                    />
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={() => {
+                    setCheckInDetailsModalOpen(false)
+                    setSelectedCheckIn(null)
+                  }}
+                >
+                  <Xmark width={32} height={32} color={colors.text} />
+                </Pressable>
+              </View>
+            }
+            ContentComponent={
+              <ScrollView
+                style={themed($checkInDetailsScroll)}
+                contentContainerStyle={themed($checkInDetailsScrollContent)}
+                showsVerticalScrollIndicator={false}
+              >
+                {!selectedCheckIn ? (
+                  <Text size="xs" text="No check-in selected." centered />
+                ) : (
+                  <>
+                    <View style={themed($checkInOverallRow)}>
+                      <Image
+                        source={MOOD_IMAGES[selectedCheckIn.overallMood || 3]}
+                        style={themed($checkInOverallImage)}
+                      />
+                      <View style={themed($checkInOverallTextColumn)}>
+                        <Text size="xxs" weight="semiBold" text="Overall mood" />
+                        <Text
+                          size="xs"
+                          text={
+                            AVG_MOOD.find((m) => m.value === selectedCheckIn.overallMood)?.label ||
+                            "—"
+                          }
+                        />
+                      </View>
+                    </View>
+
+                    <View style={themed($checkInDetailsStepsContainer)}>
+                      {[...(selectedCheckIn.steps || [])]
+                        .sort((a, b) => a.step - b.step)
+                        .map((s) => {
+                          const moodLabel =
+                            MOOD_OPTIONS[s.step]?.find((opt) => opt.value === s.mood)?.label ||
+                            `${s.mood}`
+                          return (
+                            <View
+                              key={`${selectedCheckIn.id}-${s.step}`}
+                              style={themed($checkInDetailsStepCard)}
+                            >
+                              <Text
+                                size="xxs"
+                                weight="semiBold"
+                                text={`Step ${s.step}: ${STEP_QUESTIONS[s.step - 1] || ""}`}
+                              />
+                              <View style={themed($checkInDetailsStepMoodRow)}>
+                                <Image
+                                  source={MOOD_IMAGES[s.mood || 3]}
+                                  style={themed($checkInDetailsStepMoodImage)}
+                                />
+                                <Text size="xs" text={moodLabel} />
+                              </View>
+                              {s.notes ? (
+                                <View style={themed($checkInDetailsNotesContainer)}>
+                                  <Text size="xxs" weight="semiBold" text="Notes" />
+                                  <Text size="xs" text={s.notes} />
+                                </View>
+                              ) : null}
+                            </View>
+                          )
+                        })}
+                    </View>
+                  </>
+                )}
+              </ScrollView>
+            }
+          />
+        </View>
+      </Modal>
+
       <AIDisclosureModal
         visible={showAIDisclosure}
         onAccept={handleAcceptAIDisclosure}
@@ -572,4 +690,88 @@ const $checkInCompleteAlert: ThemedStyle<ViewStyle> = ({ colors, spacing }) => (
   flexDirection: "row",
   alignItems: "center",
   gap: spacing.sm,
+})
+
+const $checkInDetailsModalContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  padding: spacing.md,
+})
+
+const $checkInDetailsBackdrop: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: colors.palette.primary500,
+  opacity: 0.5,
+})
+
+const $checkInDetailsCard: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  padding: spacing.sm,
+  width: "100%",
+  maxHeight: "85%",
+})
+
+const $checkInDetailsDateText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.palette.primary500,
+})
+
+const $checkInDetailsScroll: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginTop: spacing.md,
+})
+
+const $checkInDetailsScrollContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  paddingBottom: spacing.md,
+  gap: spacing.md,
+})
+
+const $checkInOverallRow: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  gap: spacing.sm,
+  padding: spacing.sm,
+  borderWidth: 1,
+  borderColor: colors.palette.neutral300,
+  borderRadius: spacing.sm,
+  backgroundColor: colors.palette.neutral100,
+})
+
+const $checkInOverallImage: ThemedStyle<ImageStyle> = () => ({
+  height: 44,
+  width: 44,
+})
+
+const $checkInOverallTextColumn: ThemedStyle<ViewStyle> = () => ({
+  flex: 1,
+})
+
+const $checkInDetailsStepsContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  gap: spacing.sm,
+})
+
+const $checkInDetailsStepCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  padding: spacing.sm,
+  borderWidth: 1,
+  borderColor: colors.palette.neutral300,
+  borderRadius: spacing.sm,
+  backgroundColor: colors.palette.neutral100,
+  gap: spacing.xs,
+})
+
+const $checkInDetailsStepMoodRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  gap: spacing.sm,
+})
+
+const $checkInDetailsStepMoodImage: ThemedStyle<ImageStyle> = () => ({
+  height: 28,
+  width: 28,
+})
+
+const $checkInDetailsNotesContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginTop: spacing.xs,
 })

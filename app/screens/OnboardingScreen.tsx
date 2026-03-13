@@ -19,16 +19,16 @@ import { Step1Struggles } from "@/components/Onboarding/OnboardingStrugglesStep"
 import { Step3Therapy } from "@/components/Onboarding/OnboardingTherapy"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import type { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { useAppTheme } from "@/theme/context"
-import { ThemedStyle } from "@/theme/types"
-import { useHeader } from "@/utils/useHeader"
 import { useAuth } from "@/context/AuthContext"
 import { useGetOnboardingStatus } from "@/hooks/onboarding/get-onboarding-status"
 import {
   useCompleteOnboarding,
   useSubmitOnboardingStep,
 } from "@/hooks/onboarding/onboarding-actions"
+import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
 // Import other step components as we create them
 
 interface OnboardingScreenProps extends AppStackScreenProps<"Onboarding"> {}

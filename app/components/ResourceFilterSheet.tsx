@@ -147,13 +147,13 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
               {categories
                 .filter((c) => c.name.trim().toLowerCase() !== "all")
                 .map((category) => (
-                <Checkbox
-                  key={category.id}
-                  label={category.name}
-                  value={tempFilters.categories.includes(category.name)}
-                  onValueChange={() => handleToggleCategory(category.name)}
-                />
-              ))}
+                  <Checkbox
+                    key={category.id}
+                    label={category.name}
+                    value={tempFilters.categories.includes(category.name)}
+                    onValueChange={() => handleToggleCategory(category.name)}
+                  />
+                ))}
             </View>
           </View>
 
@@ -189,11 +189,7 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
 
           {/* Footer Button */}
           <View style={themed($footer)}>
-            <Button
-              text="Apply filters"
-              onPress={handleApply}
-              style={{ width: "100%" }}
-            />
+            <Button text="Apply filters" onPress={handleApply} style={{ width: "100%" }} />
           </View>
         </BottomSheetScrollView>
       </BottomSheet>

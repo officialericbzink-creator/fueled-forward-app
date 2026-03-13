@@ -8,15 +8,10 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import * as FileSystem from "expo-file-system/legacy"
 import * as ImagePicker from "expo-image-picker"
+import * as FileSystem from "expo-file-system/legacy"
 import Toast from "react-native-toast-message"
 
-import {
-  profileFormReducer,
-  initialFormState,
-  ProfileFormActionType,
-} from "@/reducers/profile-form-reducer"
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -27,6 +22,11 @@ import { useGetProfile } from "@/hooks/profile/get-profile"
 import { useUpdateProfile } from "@/hooks/profile/update-profile"
 import { useUploadAvatar } from "@/hooks/profile/upload-avatar"
 import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
+import {
+  profileFormReducer,
+  initialFormState,
+  ProfileFormActionType,
+} from "@/reducers/profile-form-reducer"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import {

@@ -1,20 +1,20 @@
 import { FC, useEffect, useState, useRef } from "react"
 import { ScrollView, TextInput, View, ActivityIndicator, ViewStyle, TextStyle } from "react-native"
 import { MoreHoriz, SendDiagonal } from "iconoir-react-native"
-
 import Animated from "react-native-reanimated"
-import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
-import { ChatMessage } from "@/services/api"
-import { useAIDisclosure } from "@/hooks/useAIDisclosure"
-import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+
+import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
 import { Button } from "@/components/Button"
+import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { useSocket } from "@/context/AIChatContext"
 import { useAuth } from "@/context/AuthContext"
 import { useGetConversationHistory } from "@/hooks/chat/get-chat-history"
+import { useAIDisclosure } from "@/hooks/useAIDisclosure"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { ChatMessage } from "@/services/api"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { useHeader } from "@/utils/useHeader"
@@ -159,7 +159,10 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     setMessages((prev) => {
       const next = [...prev, userMessage]
 
-      const nextUserMessageCount = next.reduce((count, msg) => (msg.role === "user" ? count + 1 : count), 0)
+      const nextUserMessageCount = next.reduce(
+        (count, msg) => (msg.role === "user" ? count + 1 : count),
+        0,
+      )
       if (nextUserMessageCount % 10 === 0) {
         pendingDisclaimerCountRef.current += 1
       }
@@ -248,7 +251,7 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
             </Animated.View>
           )}
 
-          {messages.map((msg, index) => (
+          {messages.map((msg, index) =>
             (() => {
               const isDisclaimer =
                 msg.id?.startsWith("local-disclaimer-") || msg.content === DISCLAIMER_MESSAGE
@@ -267,14 +270,16 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
                   style={msg.role === "user" ? themed($userMessage) : themed($ericMessage)}
                 >
                   <Text
-                    style={msg.role === "user" ? themed($userMessageText) : themed($ericMessageText)}
+                    style={
+                      msg.role === "user" ? themed($userMessageText) : themed($ericMessageText)
+                    }
                   >
                     {msg.content}
                   </Text>
                 </View>
               )
-            })()
-          ))}
+            })(),
+          )}
 
           {isTyping && (
             <View style={themed($typingIndicator)}>

@@ -136,12 +136,7 @@ export const AppNavigator = (props: NavigationProps) => {
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   return (
-    <NavigationContainer
-      linking={linking}
-      ref={navigationRef}
-      theme={navigationTheme}
-      {...props}
-    >
+    <NavigationContainer linking={linking} ref={navigationRef} theme={navigationTheme} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
       </ErrorBoundary>

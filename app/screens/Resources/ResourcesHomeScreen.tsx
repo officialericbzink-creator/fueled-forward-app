@@ -1,5 +1,13 @@
 import React, { FC, useRef, useMemo, useCallback, useEffect } from "react"
-import { ActivityIndicator, FlatList, ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import {
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native"
 import BottomSheet, { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
 import { Filter, Search } from "iconoir-react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
@@ -76,7 +84,14 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
         readTimes: filters.readTimes,
         pageSize: PAGE_SIZE,
       }
-    }, [profileData?.profile?.struggles, category, filters.categories, filters.types, filters.readTimes, debouncedSearchText]),
+    }, [
+      profileData?.profile?.struggles,
+      category,
+      filters.categories,
+      filters.types,
+      filters.readTimes,
+      debouncedSearchText,
+    ]),
   )
   const {
     data: categories,
@@ -130,8 +145,7 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
     listRef.current?.scrollToOffset({ offset: 0, animated: false })
   }, [])
 
-  const lastPageCount =
-    resourcesPages?.pages?.[resourcesPages.pages.length - 1]?.data?.length ?? 0
+  const lastPageCount = resourcesPages?.pages?.[resourcesPages.pages.length - 1]?.data?.length ?? 0
   const canLoadMore = Boolean(hasNextPage) || lastPageCount === PAGE_SIZE
 
   return (
@@ -230,32 +244,35 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
                 {categories
                   .filter((c) => c.name.trim().toLowerCase() !== "all")
                   .map((resource) => (
-                  <TouchableOpacity key={resource.name} onPress={() => setCategory(resource.name)}>
-                    <Text
-                      style={
-                        category === resource.name
-                          ? {
-                              paddingHorizontal: spacing.sm,
-                              backgroundColor: colors.palette.neutral200,
-                              borderBottomColor: colors.palette.neutral800,
-                              fontSize: 12,
-                              borderBottomWidth: 2,
-                              color: colors.palette.primary700,
-                            }
-                          : {
-                              paddingHorizontal: spacing.sm,
-                              fontSize: 12,
-                              borderBottomWidth: 2,
-                              borderBottomColor: colors.palette.neutral200,
-                              backgroundColor: colors.palette.neutral200,
-                              color: colors.palette.primary500,
-                            }
-                      }
+                    <TouchableOpacity
+                      key={resource.name}
+                      onPress={() => setCategory(resource.name)}
                     >
-                      {resource.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={
+                          category === resource.name
+                            ? {
+                                paddingHorizontal: spacing.sm,
+                                backgroundColor: colors.palette.neutral200,
+                                borderBottomColor: colors.palette.neutral800,
+                                fontSize: 12,
+                                borderBottomWidth: 2,
+                                color: colors.palette.primary700,
+                              }
+                            : {
+                                paddingHorizontal: spacing.sm,
+                                fontSize: 12,
+                                borderBottomWidth: 2,
+                                borderBottomColor: colors.palette.neutral200,
+                                backgroundColor: colors.palette.neutral200,
+                                color: colors.palette.primary500,
+                              }
+                        }
+                      >
+                        {resource.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
               </View>
             </ScrollView>
           )}
