@@ -1,7 +1,16 @@
 import { FC, useEffect, useState, useRef } from "react"
-import { ScrollView, TextInput, View, ActivityIndicator, ViewStyle, TextStyle } from "react-native"
+import {
+  ScrollView,
+  TextInput,
+  View,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Platform,
+} from "react-native"
 import { MoreHoriz, SendDiagonal } from "iconoir-react-native"
 import Animated from "react-native-reanimated"
+import { useHeaderHeight } from "@react-navigation/elements"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
@@ -34,6 +43,7 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const scrollViewRef = useRef<ScrollView>(null)
   const pendingDisclaimerCountRef = useRef(0)
   const insets = useSafeAreaInsets()
+  const headerHeight = useHeaderHeight()
   const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
   const [showAIDisclosure, setShowAIDisclosure] = useState(false)
 
@@ -218,17 +228,17 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     <Screen
       contentContainerStyle={{ flex: 1 }}
       safeAreaEdges={["bottom"]}
-      preset="auto"
-      // keyboardShouldPersistTaps="handled"
-      keyboardBottomOffset={0}
-      // Chat is a fixed footer layout; on Android (especially edge-to-edge) `height` often still
-      // leaves the composer behind the keyboard. Force `padding` here.
-      KeyboardAvoidingViewProps={{ behavior: "padding", enabled: true }}
+      // Standard chat layout: messages scroll, composer fixed above keyboard.
+      // Avoid wrapping the whole screen in a keyboard-aware scroll view (causes Android scroll issues).
+      preset="fixed"
+      keyboardOffset={headerHeight}
     >
       <View style={{ flex: 1 }}>
         <ScrollView
           ref={scrollViewRef}
           style={{ flex: 1, paddingHorizontal: spacing.sm }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: "flex-end",

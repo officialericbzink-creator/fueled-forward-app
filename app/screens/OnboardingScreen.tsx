@@ -1,6 +1,6 @@
 // screens/OnboardingScreen.tsx
 import { FC, useEffect, useLayoutEffect, useState, useRef, useCallback } from "react"
-import { ViewStyle, View, ActivityIndicator, Pressable } from "react-native"
+import { Platform, ViewStyle, View, ActivityIndicator, Pressable } from "react-native"
 import { CommonActions } from "@react-navigation/native"
 import Animated, {
   useAnimatedStyle,
@@ -281,10 +281,13 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
 
   return (
     <Screen
-      contentContainerStyle={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
       style={themed($root)}
       preset="auto"
       safeAreaEdges={["bottom"]}
+      // Both iOS and Android can show an input accessory/suggestion bar.
+      // iOS generally needs more clearance; Android needs a smaller offset to avoid over-scrolling.
+      keyboardBottomOffset={Platform.select({ ios: 30, android: 130, default: 0 })}
     >
       <Animated.View style={[themed($contentContainer), contentAnimatedStyle]}>
         {renderStep()}
@@ -309,7 +312,7 @@ const $root: ThemedStyle<ViewStyle> = (theme) => ({
 })
 
 const $contentContainer: ThemedStyle<ViewStyle> = (theme) => ({
-  flex: 1,
+  flexGrow: 1,
   // justifyContent: "flex-end",
 })
 
