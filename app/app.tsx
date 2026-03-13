@@ -1,6 +1,6 @@
 import "./utils/gestureHandler"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Platform } from "react-native"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
@@ -124,17 +124,15 @@ export function App() {
 function AppContent() {
   const { isLoading: isAuthLoading } = useAuth()
 
-  const onLayoutRootView = useCallback(async () => {
+  useEffect(() => {
     if (!isAuthLoading) {
-      await SplashScreen.hideAsync()
+      SplashScreen.hideAsync().catch(() => {
+        // noop: app can continue even if splash hide fails
+      })
     }
   }, [isAuthLoading])
 
-  if (isAuthLoading) {
-    return null
-  }
-
-  return <AppNavigator linking={linking} onReady={onLayoutRootView} />
+  return <AppNavigator linking={linking} />
 }
 
 function ToastWrapper() {

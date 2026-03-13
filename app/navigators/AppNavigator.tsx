@@ -85,10 +85,6 @@ const AppStack = () => {
     theme: { colors },
   } = useAppTheme()
 
-  if (isLoading) {
-    return null
-  }
-
   // const emailVerified = user?.emailVerified ?? false
   // const completedOnboarding = user?.completedOnboarding ?? false
 
@@ -103,7 +99,11 @@ const AppStack = () => {
         },
       }}
     >
-      {!isAuthenticated ? (
+      {isLoading ? (
+        <>
+          <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        </>
+      ) : !isAuthenticated ? (
         <>
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />

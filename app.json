@@ -68,7 +68,7 @@
       {
         "image": "./assets/images/ff-splash-screen.png",
         "resizeMode": "contain",
-        "imageWidth": 200,
+        "imageWidth": "100%",
         "backgroundColor": "#000000"
       }
     ],

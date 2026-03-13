@@ -1,4 +1,4 @@
-import { ComponentType, FC, useMemo, useRef, useState } from "react"
+import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
 import { Pressable, TextInput, View, ViewStyle } from "react-native"
 import { usePostHog } from "posthog-react-native"
 import Toast from "react-native-toast-message"
@@ -27,6 +27,10 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const lastAutoSignUpKey = useRef<string | null>(null)
+  const wasAutoFilled = useRef(false)
+  const prevPasswordLength = useRef(0)
+  const prevConfirmLength = useRef(0)
 
   const {
     themed,
@@ -132,6 +136,51 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
     }
   }
 
+  const handlePasswordChange = (text: string) => {
+    const lengthDiff = text.length - prevPasswordLength.current
+    if (lengthDiff > 3) {
+      wasAutoFilled.current = true
+    }
+    prevPasswordLength.current = text.length
+    setAuthPassword(text)
+  }
+
+  const handleConfirmChange = (text: string) => {
+    const lengthDiff = text.length - prevConfirmLength.current
+    if (lengthDiff > 3) {
+      wasAutoFilled.current = true
+    }
+    prevConfirmLength.current = text.length
+    setConfirmPassword(text)
+  }
+
+  // Auto-submit ONLY after iOS Password AutoFill fills credentials.
+  // Only triggers if password was filled via autofill (many chars at once).
+  useEffect(() => {
+    if (isSubmitted) return
+    if (!wasAutoFilled.current) return
+
+    const email = authEmail.trim()
+    const password = authPassword
+    const confirm = confirmPassword
+
+    if (!email || email.length < 6) return
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return
+    if (!password || password.length < 6) return
+    if (password !== confirm) return
+
+    const key = `${email}::${password}`
+    if (lastAutoSignUpKey.current === key) return
+    lastAutoSignUpKey.current = key
+
+    const timeout = setTimeout(() => {
+      signUp()
+    }, 250)
+
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authEmail, authPassword, confirmPassword, isSubmitted])
+
   return (
     <Screen
       contentContainerStyle={themed($screenContentContainer)}
@@ -144,43 +193,46 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         onChangeText={setAuthEmail}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="off"
+        autoComplete="email"
         autoCorrect={false}
         keyboardType="email-address"
         labelTx="auth:signIn.emailFieldLabel"
         placeholderTx="auth:signUp.emailFieldPlaceholder"
-        textContentType="none"
-        // onSubmitEditing={() => authPasswordInput.current?.focus()}
+        textContentType="emailAddress"
+        returnKeyType="next"
+        onSubmitEditing={() => authPasswordInput.current?.focus()}
       />
 
       <TextField
         ref={authPasswordInput}
         value={authPassword}
-        onChangeText={setAuthPassword}
+        onChangeText={handlePasswordChange}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="off"
+        autoComplete="new-password"
         autoCorrect={false}
         secureTextEntry={isAuthPasswordHidden}
+        returnKeyType="next"
         labelTx="auth:signIn.passwordFieldLabel"
         placeholderTx="auth:signUp.passwordFieldPlaceholder"
-        // onSubmitEditing={signUp}
-        textContentType="none"
+        textContentType="newPassword"
+        onSubmitEditing={() => confirmPasswordInput.current?.focus()}
         RightAccessory={PasswordRightAccessory}
       />
       <TextField
         ref={confirmPasswordInput}
         value={confirmPassword}
-        onChangeText={setConfirmPassword}
+        onChangeText={handleConfirmChange}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="off"
+        autoComplete="new-password"
         autoCorrect={false}
         secureTextEntry={isAuthPasswordHidden}
+        returnKeyType="done"
         labelTx="auth:signUp.confirmPasswordFieldLabel"
         placeholderTx="auth:signUp.confirmPasswordFieldPlaceholder"
-        // onSubmitEditing={signUp}
-        textContentType="none"
+        textContentType="newPassword"
+        onSubmitEditing={signUp}
         RightAccessory={PasswordRightAccessory}
       />
       <View style={themed($signInContainer)}>
