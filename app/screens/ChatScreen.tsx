@@ -40,8 +40,12 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
   const scrollViewRef = useRef<ScrollView>(null)
   const pendingDisclaimerCountRef = useRef(0)
+  const noResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const NO_RESPONSE_TIMEOUT_MS = 20000
   const insets = useSafeAreaInsets()
   const headerHeight = useHeaderHeight()
   const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
@@ -76,6 +80,24 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     }
   }, [conversationData])
 
+  // Clear no-response timeout (used from effect and sendMessage)
+  const clearNoResponseTimeout = () => {
+    if (noResponseTimeoutRef.current) {
+      clearTimeout(noResponseTimeoutRef.current)
+      noResponseTimeoutRef.current = null
+    }
+  }
+
+  // Start no-response safety timer (starts when user sends; cleared on response or typing false)
+  const startNoResponseTimeout = () => {
+    clearNoResponseTimeout()
+    noResponseTimeoutRef.current = setTimeout(() => {
+      noResponseTimeoutRef.current = null
+      setIsTyping(false)
+      setChatError("Something went wrong. Please try again.")
+    }, NO_RESPONSE_TIMEOUT_MS)
+  }
+
   // Handle incoming messages and typing events
   useEffect(() => {
     if (!socket) return
@@ -89,6 +111,8 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
       content: string
       timestamp: string
     }) => {
+      clearNoResponseTimeout()
+      setChatError(null)
       setMessages((prev) => {
         const next: ChatMessage[] = [
           ...prev,
@@ -118,6 +142,7 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     socket.on("messageResponse", handleMessageResponse)
 
     return () => {
+      clearNoResponseTimeout()
       socket.off("typing", handleTyping)
       socket.off("messageResponse", handleMessageResponse)
     }
@@ -158,6 +183,9 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
 
   const sendMessage = () => {
     if (!inputText.trim() || !session?.user?.id) return
+
+    setChatError(null)
+    startNoResponseTimeout()
 
     const userMessage = {
       id: `local-${Date.now()}`,
@@ -298,6 +326,11 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
           )}
         </ScrollView>
 
+        {chatError && (
+          <View style={themed($chatErrorContainer)}>
+            <Text style={themed($chatErrorText)}>{chatError}</Text>
+          </View>
+        )}
         <View
           style={[
             themed($textInputContainer),
@@ -390,6 +423,18 @@ const $sendButton: ThemedStyle<ViewStyle> = () => ({
   minHeight: 40,
   height: 45,
   maxHeight: 50,
+})
+
+const $chatErrorContainer: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
+  paddingHorizontal: spacing.sm,
+  paddingVertical: spacing.xs,
+  backgroundColor: colors.background,
+})
+
+const $chatErrorText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.error,
+  fontSize: 14,
+  textAlign: "center",
 })
 
 const $textInputContainer: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({

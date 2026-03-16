@@ -8,6 +8,7 @@ import {
   Pressable,
   InteractionManager,
 } from "react-native"
+import { CommonActions } from "@react-navigation/native"
 import { ArrowLeftTag, NavArrowLeft } from "iconoir-react-native"
 import Toast from "react-native-toast-message"
 
@@ -63,6 +64,23 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
         // Never block the user flow on review prompting.
       })
     })
+  }
+
+  /** After successful check-in, go back to home and clear the stack so returning from Resources doesn't show CheckIn (avoids resubmit). */
+  const goHomeAfterCheckIn = (options?: { thenNavigateToResources?: boolean }) => {
+    setModalVisible(false)
+    navigation.dispatch(
+      CommonActions.reset({ index: 0, routes: [{ name: "HomeDashboard" }] }),
+    )
+    maybePromptReviewAfterFirstCheckIn()
+    if (options?.thenNavigateToResources) {
+      const parent = navigation.getParent()
+      if (parent) {
+        requestAnimationFrame(() => {
+          parent.navigate("Resources", { screen: "ResourcesHome" })
+        })
+      }
+    }
   }
 
   const {
@@ -303,12 +321,10 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
         animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible)
-        }}
+        onRequestClose={() => goHomeAfterCheckIn()}
       >
         <Pressable
-          onPress={() => setModalVisible(false)}
+          onPress={() => goHomeAfterCheckIn()}
           style={{
             flex: 1,
             justifyContent: "center",
@@ -363,23 +379,13 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
               text="Go Home"
               preset="reversed"
               style={{ width: "100%" }}
-              onPress={() => {
-                setModalVisible(false)
-                navigation.navigate("HomeDashboard")
-                maybePromptReviewAfterFirstCheckIn()
-              }}
+              onPress={() => goHomeAfterCheckIn()}
             />
             <Button
               text="See Recommended Resources"
               textStyle={{ fontSize: 14 }}
               style={{ width: "100%", marginTop: spacing.sm }}
-              onPress={() => {
-                setModalVisible(false)
-                navigation.navigate("Resources", {
-                  screen: "ResourcesHome",
-                })
-                maybePromptReviewAfterFirstCheckIn()
-              }}
+              onPress={() => goHomeAfterCheckIn({ thenNavigateToResources: true })}
             />
           </Pressable>
         </Pressable>
