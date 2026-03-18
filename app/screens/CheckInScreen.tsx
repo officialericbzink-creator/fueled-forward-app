@@ -1,25 +1,39 @@
+import { FC, useEffect, useMemo, useState } from "react"
+import {
+  View,
+  ViewStyle,
+  Image,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  InteractionManager,
+} from "react-native"
+import { CommonActions } from "@react-navigation/native"
+import { ArrowLeftTag, NavArrowLeft } from "iconoir-react-native"
+import Toast from "react-native-toast-message"
+
+import { Button } from "@/components/Button"
+import { Card } from "@/components/Card"
+import { ProgressBar } from "@/components/ProgressBar"
+import { Screen } from "@/components/Screen"
+import { Text } from "@/components/Text"
+import { TextField } from "@/components/TextField"
+import { useAuth } from "@/context/AuthContext"
+import { useCreateCheckIn } from "@/hooks/check-in/create-check-in"
+import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
+import { CheckInType } from "@/services/api/types"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { View, ViewStyle, Image, TouchableOpacity, Modal, Pressable } from "react-native"
-import { Screen } from "@/components/Screen"
-import { useHeader } from "@/utils/useHeader"
-import { Card } from "@/components/Card"
-import { Text } from "@/components/Text"
-import { FC, useEffect, useState } from "react"
-import { Button } from "@/components/Button"
-import { CheckInType } from "@/services/api/types"
-import { ArrowLeftTag, NavArrowLeft } from "iconoir-react-native"
-import { ProgressBar } from "@/components/ProgressBar"
-import { TextField } from "@/components/TextField"
 import { MOOD_IMAGES, NUM_STEPS, STEP_QUESTIONS, MOOD_OPTIONS, AVG_MOOD } from "@/utils/constants"
-import { useCreateCheckIn } from "@/hooks/check-in/create-check-in"
-import Toast from "react-native-toast-message"
-import { HomeCheckInStackScreenProps } from "@/navigators/CheckInNavigator"
+import { storage } from "@/utils/storage"
+import { useHeader } from "@/utils/useHeader"
+import { promptToReviewAsync } from "@/utils/useStoreReviewRequest"
 
 interface CheckInScreenProps extends HomeCheckInStackScreenProps<"CheckIn"> {}
 
 export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
   const { mutateAsync, isPending } = useCreateCheckIn()
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [checkInFormState, setCheckInFormState] = useState<CheckInType>({
     overallMood: undefined,
@@ -28,6 +42,46 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
   })
   const [modalVisible, setModalVisible] = useState(false)
   const [notesText, setNotesText] = useState("")
+  const [checkInJustSubmitted, setCheckInJustSubmitted] = useState(false)
+
+  const shouldOfferReview = useMemo(() => {
+    // Check-in is only reachable post-onboarding, but keep this guard as a safety net.
+    return !!user?.completedOnboarding
+  }, [user?.completedOnboarding])
+
+  const maybePromptReviewAfterFirstCheckIn = () => {
+    if (!shouldOfferReview) return
+    if (!checkInJustSubmitted) return
+
+    const key = "storeReviewRequestedAfterFirstCheckin_v1"
+    if (storage.getBoolean(key)) return
+
+    // Set immediately to avoid double prompts if user taps quickly.
+    storage.set(key, true)
+
+    InteractionManager.runAfterInteractions(() => {
+      promptToReviewAsync().catch(() => {
+        // Never block the user flow on review prompting.
+      })
+    })
+  }
+
+  /** After successful check-in, go back to home and clear the stack so returning from Resources doesn't show CheckIn (avoids resubmit). */
+  const goHomeAfterCheckIn = (options?: { thenNavigateToResources?: boolean }) => {
+    setModalVisible(false)
+    navigation.dispatch(
+      CommonActions.reset({ index: 0, routes: [{ name: "HomeDashboard" }] }),
+    )
+    maybePromptReviewAfterFirstCheckIn()
+    if (options?.thenNavigateToResources) {
+      const parent = navigation.getParent()
+      if (parent) {
+        requestAnimationFrame(() => {
+          parent.navigate("Resources", { screen: "ResourcesHome" })
+        })
+      }
+    }
+  }
 
   const {
     themed,
@@ -96,6 +150,7 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
     try {
       await mutateAsync(data)
       setCheckInFormState((prev) => ({ ...prev, overallMood: data.overallMood }))
+      setCheckInJustSubmitted(true)
       setModalVisible(true)
     } catch (error) {
       // Show error toast - adjust this based on your toast library
@@ -266,12 +321,10 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
         animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible)
-        }}
+        onRequestClose={() => goHomeAfterCheckIn()}
       >
         <Pressable
-          onPress={() => setModalVisible(false)}
+          onPress={() => goHomeAfterCheckIn()}
           style={{
             flex: 1,
             justifyContent: "center",
@@ -326,21 +379,13 @@ export const CheckInScreen: FC<CheckInScreenProps> = ({ navigation }) => {
               text="Go Home"
               preset="reversed"
               style={{ width: "100%" }}
-              onPress={() => {
-                setModalVisible(false)
-                navigation.navigate("HomeDashboard")
-              }}
+              onPress={() => goHomeAfterCheckIn()}
             />
             <Button
               text="See Recommended Resources"
               textStyle={{ fontSize: 14 }}
               style={{ width: "100%", marginTop: spacing.sm }}
-              onPress={() => {
-                setModalVisible(false)
-                navigation.navigate("Resources", {
-                  screen: "ResourcesHome",
-                })
-              }}
+              onPress={() => goHomeAfterCheckIn({ thenNavigateToResources: true })}
             />
           </Pressable>
         </Pressable>

@@ -1,8 +1,10 @@
-import { ApisauceInstance, create } from "apisauce"
-import { authClient } from "../../../lib/auth"
-import { ApiConfig } from "./types"
-import { posthog } from "@/utils/posthog"
 import * as Localization from "expo-localization"
+import { ApisauceInstance, create } from "apisauce"
+
+import { posthog } from "@/utils/posthog"
+
+import { ApiConfig } from "./types"
+import { authClient } from "../../../lib/auth"
 
 export class BaseApi {
   apisauce: ApisauceInstance

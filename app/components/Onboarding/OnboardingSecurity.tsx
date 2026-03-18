@@ -2,6 +2,7 @@
 import { FC, useState, useEffect } from "react"
 import { ViewStyle, TextStyle, Pressable, View } from "react-native"
 import Animated from "react-native-reanimated"
+
 import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
 import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"

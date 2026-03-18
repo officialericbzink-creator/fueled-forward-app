@@ -1,6 +1,7 @@
 // screens/OnboardingScreen.tsx
-import { FC, useEffect, useState, useRef, useCallback } from "react"
-import { ViewStyle, View, ActivityIndicator, Pressable } from "react-native"
+import { FC, useEffect, useLayoutEffect, useState, useRef, useCallback } from "react"
+import { Platform, ViewStyle, View, ActivityIndicator, Pressable } from "react-native"
+import { CommonActions } from "@react-navigation/native"
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,26 +9,26 @@ import Animated, {
   Easing,
   runOnJS,
 } from "react-native-reanimated"
-import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+
+import { Button } from "@/components/Button"
+import { OnboardingFinishStep } from "@/components/Onboarding/OnboardingFinishStep"
+import { Step2ImportantDate } from "@/components/Onboarding/OnboardingImportantDate"
+import { Step0Name } from "@/components/Onboarding/OnboardingNameStep"
+import { Step5Biometric } from "@/components/Onboarding/OnboardingSecurity"
+import { Step1Struggles } from "@/components/Onboarding/OnboardingStrugglesStep"
+import { Step3Therapy } from "@/components/Onboarding/OnboardingTherapy"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { Button } from "@/components/Button"
-import { useHeader } from "@/utils/useHeader"
 import { useAuth } from "@/context/AuthContext"
-import { useAppTheme } from "@/theme/context"
-import { ThemedStyle } from "@/theme/types"
 import { useGetOnboardingStatus } from "@/hooks/onboarding/get-onboarding-status"
 import {
   useCompleteOnboarding,
   useSubmitOnboardingStep,
 } from "@/hooks/onboarding/onboarding-actions"
-import { Step0Name } from "@/components/Onboarding/OnboardingNameStep"
-import { Step1Struggles } from "@/components/Onboarding/OnboardingStrugglesStep"
-import { Step2ImportantDate } from "@/components/Onboarding/OnboardingImportantDate"
-import { Step3Therapy } from "@/components/Onboarding/OnboardingTherapy"
-import { Step5Biometric } from "@/components/Onboarding/OnboardingSecurity"
-import { OnboardingPaywallStep } from "@/components/Onboarding/OnboardingPaywall"
-import { CommonActions } from "@react-navigation/native"
+import type { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
 // Import other step components as we create them
 
 interface OnboardingScreenProps extends AppStackScreenProps<"Onboarding"> {}
@@ -98,8 +99,9 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
     }
   }, [onboardingStatus?.completedOnboarding, navigation])
 
-  // Reset step data and validation when step changes
-  useEffect(() => {
+  // Reset step data and validation when step changes.
+  // Use layout effect so this runs before children `useEffect` that set validity.
+  useLayoutEffect(() => {
     setStepData(null)
     setIsStepValid(false)
   }, [currentStep])
@@ -255,7 +257,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
         )
       case 4:
         return (
-          <OnboardingPaywallStep
+          <OnboardingFinishStep
             onDataChange={handleDataChange} // ← Use memoized callback
             onValidationChange={handleValidationChange}
           />
@@ -279,10 +281,13 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = ({ navigation }) => {
 
   return (
     <Screen
-      contentContainerStyle={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
       style={themed($root)}
       preset="auto"
       safeAreaEdges={["bottom"]}
+      // Both iOS and Android can show an input accessory/suggestion bar.
+      // iOS generally needs more clearance; Android needs a smaller offset to avoid over-scrolling.
+      keyboardBottomOffset={Platform.select({ ios: 30, android: 130, default: 0 })}
     >
       <Animated.View style={[themed($contentContainer), contentAnimatedStyle]}>
         {renderStep()}
@@ -307,7 +312,7 @@ const $root: ThemedStyle<ViewStyle> = (theme) => ({
 })
 
 const $contentContainer: ThemedStyle<ViewStyle> = (theme) => ({
-  flex: 1,
+  flexGrow: 1,
   // justifyContent: "flex-end",
 })
 

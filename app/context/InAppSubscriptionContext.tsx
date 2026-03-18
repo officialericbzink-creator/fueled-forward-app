@@ -8,10 +8,10 @@ import {
   useCallback,
 } from "react"
 import { Linking, Platform } from "react-native"
+import { usePostHog } from "posthog-react-native"
 import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesPackage } from "react-native-purchases"
 
 import { useAuth } from "./AuthContext"
-import { usePostHog } from "posthog-react-native"
 
 // Subscription status types
 export type SubscriptionStatus = "active" | "trial" | "expired" | "none"
@@ -56,6 +56,8 @@ export interface OfferingPackage {
     identifier: string
     title: string
     description: string
+    currencyCode?: string | null
+    priceNumber?: number | null
   }
 }
 
@@ -68,6 +70,7 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 }) => {
   const posthog = usePostHog()
   const { user, isAuthenticated } = useAuth()
+  const isBypassPaywall = __DEV__ && process.env.EXPO_PUBLIC_BYPASS_PAYWALL === "true"
 
   const [isInitialized, setIsInitialized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -105,8 +108,9 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
       }
 
       try {
-        // STUB: Check for dev bypass
-        if (__DEV__ && process.env.EXPO_PUBLIC_BYPASS_PAYWALL === "true") {
+        // Dev bypass: treat user as subscribed but do NOT touch RevenueCat SDK
+        // (calling Purchases.getOfferings/getCustomerInfo without configure() throws "no singleton instance")
+        if (isBypassPaywall) {
           console.log("⚠️ DEV MODE: Bypassing RevenueCat initialization")
           setIsInitialized(true)
           setIsLoading(false)
@@ -119,6 +123,8 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
             expirationDate: null,
             isSubscribed: true,
           })
+          setSubscriptionDataLoaded(true)
+          setAvailablePackages([])
           return
         }
 
@@ -149,8 +155,6 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
           throw new Error(`No API key for platform: ${Platform.OS}`)
         }
 
-        console.log("✅ RevenueCat initialized successfully")
-        setIsInitialized(true)
         console.log("✅ RevenueCat initialized successfully")
         setIsInitialized(true)
 
@@ -242,6 +246,27 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
     }
   }
 
+  const formatCurrency = (
+    amount: number,
+    currencyCode: string | null | undefined,
+    fallbackPriceString?: string,
+  ): string => {
+    try {
+      if (currencyCode && typeof Intl !== "undefined" && typeof Intl.NumberFormat === "function") {
+        return new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency: currencyCode,
+        }).format(amount)
+      }
+    } catch {
+      // ignore and fall back below
+    }
+
+    // Fallback: keep any leading non-digit chars from the localized priceString (e.g. "₱")
+    const symbol = (fallbackPriceString || "").match(/^[^\d]+/)?.[0] || ""
+    return `${symbol}${amount.toFixed(2)}`
+  }
+
   const identifyPlanType = (pkg: PurchasesPackage): PlanType | null => {
     const productId = pkg.product.identifier.toLowerCase()
     const packageType = pkg.packageType
@@ -268,6 +293,7 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
   // Fetch subscription status from RevenueCat
   const fetchSubscriptionStatus = useCallback(async () => {
+    if (isBypassPaywall) return
     if (!isInitialized) {
       console.log("⚠️ RC not initialized, skipping status fetch")
       return
@@ -294,6 +320,9 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
   // Purchase a plan
   const purchasePlan = useCallback(
     async (planType: PlanType): Promise<{ success: boolean; error?: string }> => {
+      if (isBypassPaywall) {
+        return { success: false, error: "Purchases disabled in dev paywall bypass" }
+      }
       if (!isInitialized) {
         return { success: false, error: "RevenueCat not initialized" }
       }
@@ -357,6 +386,9 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
     success: boolean
     error?: string
   }> => {
+    if (isBypassPaywall) {
+      return { success: false, error: "Purchases disabled in dev paywall bypass" }
+    }
     if (!isInitialized) {
       return { success: false, error: "RevenueCat not initialized" }
     }
@@ -392,7 +424,7 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
   useEffect(() => {
     const loadOfferings = async () => {
-      if (!isInitialized) return
+      if (!isInitialized || isBypassPaywall) return
 
       try {
         setIsLoadingOfferings(true)
@@ -423,9 +455,12 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
               // Calculate price per month for annual
               let pricePerMonth = price
-              if (isYearly && pkg.product.price) {
-                const monthlyPrice = pkg.product.price / 12
-                pricePerMonth = `$${monthlyPrice.toFixed(2)}/mo`
+              const currencyCode = (pkg.product as any)?.currencyCode as string | undefined
+              const priceNumber =
+                typeof pkg.product.price === "number" ? pkg.product.price : undefined
+              if (isYearly && typeof priceNumber === "number") {
+                const monthlyPrice = priceNumber / 12
+                pricePerMonth = `${formatCurrency(monthlyPrice, currencyCode, price)}/mo`
               }
 
               return {
@@ -437,6 +472,8 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
                   identifier: pkg.product.identifier,
                   title: pkg.product.title,
                   description: pkg.product.description,
+                  currencyCode: currencyCode ?? null,
+                  priceNumber: typeof priceNumber === "number" ? priceNumber : null,
                 },
               }
             })
@@ -458,11 +495,12 @@ export const InAppSubscriptionProvider: FC<PropsWithChildren<InAppSubscriptionPr
 
   // Open native subscription management
   const manageSubscription = useCallback(() => {
+    if (isBypassPaywall || !isInitialized) return
     Purchases.getCustomerInfo().then((info) => {
       const url = info.managementURL
       if (url) Linking.openURL(url)
     })
-  }, [])
+  }, [isBypassPaywall, isInitialized])
 
   // Refresh subscription status
   const refreshSubscriptionStatus = useCallback(async () => {

@@ -1,9 +1,10 @@
-import { createContext, FC, PropsWithChildren, useContext, useCallback, useEffect } from "react"
+import { createContext, FC, PropsWithChildren, useContext, useCallback, useEffect, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { SessionQueryParams } from "better-auth/types"
 
-import { authClient } from "../../lib/auth"
 import { posthog } from "@/utils/posthog"
+
+import { authClient } from "../../lib/auth"
 
 export type AuthContextType = {
   // Session data
@@ -38,6 +39,14 @@ export interface AuthProviderProps {}
 export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ children }) => {
   const queryClient = useQueryClient()
   const { data: session, isPending, error, refetch, isRefetching } = authClient.useSession()
+  const [hasResolvedSession, setHasResolvedSession] = useState(false)
+
+  useEffect(() => {
+    // `isPending` may briefly flip true again during refetches (e.g. app foreground/background
+    // transitions triggered by FaceID/Password AutoFill). We only want to treat loading as a
+    // one-time "bootstrapping" state so the app doesn't unmount navigation and reset screens.
+    if (!isPending) setHasResolvedSession(true)
+  }, [isPending])
 
   useEffect(() => {
     console.log("🔍 AUTH STATE CHANGED:", {
@@ -83,7 +92,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     session: session ?? null,
     user: session?.user ?? null,
     isAuthenticated: !!session?.user,
-    isLoading: isPending,
+    isLoading: !hasResolvedSession,
     isPending,
     signIn,
     signOut,

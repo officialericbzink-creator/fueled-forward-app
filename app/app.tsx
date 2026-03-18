@@ -1,12 +1,12 @@
 import "./utils/gestureHandler"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
+import { Platform } from "react-native"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { PostHogProvider } from "posthog-react-native"
-import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
 
@@ -20,6 +20,7 @@ import { customFontsToLoad } from "./theme/typography"
 import queryClient from "../lib/queryClient"
 import { SocketProvider } from "./context/AIChatContext"
 import { InAppSubscriptionProvider } from "./context/InAppSubscriptionContext"
+import { PaywallProvider } from "./context/PaywallContext"
 import { loadDateFnsLocale } from "./utils/formatDate"
 
 if (__DEV__) {
@@ -69,6 +70,9 @@ export function App() {
   return (
     <PostHogProvider
       apiKey="phc_Jr5GtJ6tJ1XgHIRHQOn7b5qUk4d07CJynLHLzbneZ5m"
+      // Prevent PostHogProvider from calling react-navigation hooks before NavigationContainer exists.
+      // (Screen autocapture can be re-enabled later with explicit navigation integration.)
+      autocapture={{ captureScreens: false }}
       options={{
         host: "https://us.i.posthog.com",
 
@@ -98,20 +102,20 @@ export function App() {
       }}
     >
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <KeyboardProvider>
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider>
-              <AuthProvider>
-                <InAppSubscriptionProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <InAppSubscriptionProvider>
+                <PaywallProvider>
                   <SocketProvider>
                     <AppContent />
                   </SocketProvider>
-                </InAppSubscriptionProvider>
-              </AuthProvider>
-              <ToastWrapper />
-            </ThemeProvider>
-          </QueryClientProvider>
-        </KeyboardProvider>
+                </PaywallProvider>
+              </InAppSubscriptionProvider>
+            </AuthProvider>
+            <ToastWrapper />
+          </ThemeProvider>
+        </QueryClientProvider>
       </SafeAreaProvider>
     </PostHogProvider>
   )
@@ -120,20 +124,21 @@ export function App() {
 function AppContent() {
   const { isLoading: isAuthLoading } = useAuth()
 
-  const onLayoutRootView = useCallback(async () => {
+  useEffect(() => {
     if (!isAuthLoading) {
-      await SplashScreen.hideAsync()
+      SplashScreen.hideAsync().catch(() => {
+        // noop: app can continue even if splash hide fails
+      })
     }
   }, [isAuthLoading])
 
-  if (isAuthLoading) {
-    return null
-  }
-
-  return <AppNavigator linking={linking} onReady={onLayoutRootView} />
+  return <AppNavigator linking={linking} />
 }
 
 function ToastWrapper() {
+  // `react-native-toast-message` uses DOM-native operations that are not supported on recent
+  // `react-native-web` versions.
+  if (Platform.OS === "web") return null
   const $topContainerInsets = useSafeAreaInsetsStyle(["top"])
   return <Toast topOffset={$topContainerInsets.paddingTop} />
 }

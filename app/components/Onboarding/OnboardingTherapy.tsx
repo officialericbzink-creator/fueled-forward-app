@@ -4,12 +4,8 @@ import Animated from "react-native-reanimated"
 
 import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
 import { Text } from "@/components/Text"
-import { TextField } from "@/components/TextField"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { storage } from "@/utils/storage"
-import { promptToReviewAsync } from "@/utils/useStoreReviewRequest"
-import { useMMKVBoolean } from "react-native-mmkv"
 
 interface Step3TherapyProps {
   onDataChange: (data: { inTherapy: boolean; therapyDetails?: string }) => void
@@ -20,18 +16,6 @@ export const Step3Therapy: FC<Step3TherapyProps> = ({ onDataChange, onValidation
   const { themed, theme } = useAppTheme()
   const [showOptions, setShowOptions] = useState(false)
   const [inTherapy, setInTherapy] = useState<boolean | null>(null)
-  const [showFollowUp, setShowFollowUp] = useState(false)
-  const [therapyDetails, setTherapyDetails] = useState("")
-  const [hasRequestedReview, setHasRequestedReview] = useMMKVBoolean(
-    "storeReviewRequested",
-    storage,
-  )
-
-  useEffect(() => {
-    if (!hasRequestedReview) {
-      promptToReviewAsync().then(() => setHasRequestedReview(true))
-    }
-  }, [hasRequestedReview, setHasRequestedReview])
 
   useEffect(() => {
     if (inTherapy === null) {
@@ -39,23 +23,12 @@ export const Step3Therapy: FC<Step3TherapyProps> = ({ onDataChange, onValidation
       return
     }
 
-    if (inTherapy) {
-      const isValid = therapyDetails.trim().length > 0
-      onDataChange({ inTherapy, therapyDetails: therapyDetails.trim() })
-      onValidationChange(isValid)
-    } else {
-      onDataChange({
-        inTherapy,
-        therapyDetails: therapyDetails.trim().length > 0 ? therapyDetails.trim() : undefined,
-      })
-      onValidationChange(true)
-    }
-  }, [inTherapy, therapyDetails])
+    onDataChange({ inTherapy })
+    onValidationChange(true)
+  }, [inTherapy, onDataChange, onValidationChange])
 
   const handleTherapyChoice = (choice: boolean) => {
     setInTherapy(choice)
-    setTherapyDetails("")
-    setShowFollowUp(true)
   }
 
   return (
@@ -98,33 +71,6 @@ export const Step3Therapy: FC<Step3TherapyProps> = ({ onDataChange, onValidation
           </Pressable>
         </View>
       )}
-
-      {/* Follow-up question */}
-      {showFollowUp && inTherapy !== null && (
-        <Animated.View style={themed($followUpContainer)}>
-          <AnimatedChatMessage
-            message={
-              inTherapy
-                ? "How long have you been in therapy?"
-                : "Would you like to share why not? (Optional)"
-            }
-            delay={400}
-          />
-
-          <TextField
-            value={therapyDetails}
-            onChangeText={setTherapyDetails}
-            placeholder={
-              inTherapy
-                ? 'e.g., "6 months" or "About a year"'
-                : 'e.g., "Too expensive" or "Haven\'t found the right fit"'
-            }
-            multiline={!inTherapy}
-            style={themed($textInput)}
-            autoFocus
-          />
-        </Animated.View>
-      )}
     </Animated.View>
   )
 }
@@ -156,12 +102,4 @@ const $optionText: ThemedStyle<TextStyle> = (theme) => ({
   fontSize: 16,
   fontWeight: "600",
   color: theme.colors.text,
-})
-
-const $followUpContainer: ThemedStyle<ViewStyle> = (theme) => ({
-  marginTop: theme.spacing.lg,
-})
-
-const $textInput: ThemedStyle<ViewStyle> = (theme) => ({
-  marginTop: theme.spacing.md,
 })

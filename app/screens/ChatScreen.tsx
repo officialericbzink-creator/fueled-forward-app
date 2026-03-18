@@ -1,24 +1,38 @@
 import { FC, useEffect, useState, useRef } from "react"
-import { Screen } from "@/components/Screen"
-import { useHeader } from "@/utils/useHeader"
-import { useAppTheme } from "@/theme/context"
-import { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { Button } from "@/components/Button"
-import { ScrollView, TextInput, View, ActivityIndicator, ViewStyle, TextStyle } from "react-native"
-import { Text } from "@/components/Text"
+import {
+  ScrollView,
+  TextInput,
+  View,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Platform,
+} from "react-native"
 import { MoreHoriz, SendDiagonal } from "iconoir-react-native"
+import Animated from "react-native-reanimated"
+import { useHeaderHeight } from "@react-navigation/elements"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+
+import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
+import { Button } from "@/components/Button"
+import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
+import { Screen } from "@/components/Screen"
+import { Text } from "@/components/Text"
+import { useSocket } from "@/context/AIChatContext"
 import { useAuth } from "@/context/AuthContext"
 import { useGetConversationHistory } from "@/hooks/chat/get-chat-history"
-import { ThemedStyle } from "@/theme/types"
-import { useSocket } from "@/context/AIChatContext"
-import Animated from "react-native-reanimated"
-import { AnimatedChatMessage } from "@/components/Onboarding/AnimatedChatMessage"
-import { ChatMessage } from "@/services/api"
 import { useAIDisclosure } from "@/hooks/useAIDisclosure"
-import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
+import { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { ChatMessage } from "@/services/api"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
+import { useHeader } from "@/utils/useHeader"
 // import * as Notifications from "expo-notifications"
 
 interface AIChatScreenProps extends AppStackScreenProps<"AIChat"> {}
+
+const DISCLAIMER_MESSAGE =
+  "This app is not a replacement for therapy or mental health professionals. It is intended to support you on your wellness journey - offering a space to reflect, track your feelings, and find encouragement."
 
 export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const { session } = useAuth()
@@ -26,7 +40,14 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
   const scrollViewRef = useRef<ScrollView>(null)
+  const pendingDisclaimerCountRef = useRef(0)
+  const noResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const NO_RESPONSE_TIMEOUT_MS = 20000
+  const insets = useSafeAreaInsets()
+  const headerHeight = useHeaderHeight()
   const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
   const [showAIDisclosure, setShowAIDisclosure] = useState(false)
 
@@ -59,30 +80,69 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     }
   }, [conversationData])
 
+  // Clear no-response timeout (used from effect and sendMessage)
+  const clearNoResponseTimeout = () => {
+    if (noResponseTimeoutRef.current) {
+      clearTimeout(noResponseTimeoutRef.current)
+      noResponseTimeoutRef.current = null
+    }
+  }
+
+  // Start no-response safety timer (starts when user sends; cleared on response or typing false)
+  const startNoResponseTimeout = () => {
+    clearNoResponseTimeout()
+    noResponseTimeoutRef.current = setTimeout(() => {
+      noResponseTimeoutRef.current = null
+      setIsTyping(false)
+      setChatError("Something went wrong. Please try again.")
+    }, NO_RESPONSE_TIMEOUT_MS)
+  }
+
   // Handle incoming messages and typing events
   useEffect(() => {
     if (!socket) return
 
-    const handleTyping = (data) => {
+    const handleTyping = (data: { typing: boolean }) => {
       setTimeout(() => setIsTyping(data.typing), data.typing ? 500 : 0)
     }
 
-    const handleMessageResponse = (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: data.messageId,
-          role: "assistant",
-          content: data.content,
-          createdAt: data.timestamp,
-        },
-      ])
+    const handleMessageResponse = (data: {
+      messageId: string
+      content: string
+      timestamp: string
+    }) => {
+      clearNoResponseTimeout()
+      setChatError(null)
+      setMessages((prev) => {
+        const next: ChatMessage[] = [
+          ...prev,
+          {
+            id: data.messageId,
+            role: "assistant",
+            content: data.content,
+            createdAt: data.timestamp,
+          },
+        ]
+
+        if (pendingDisclaimerCountRef.current > 0) {
+          pendingDisclaimerCountRef.current -= 1
+          next.push({
+            id: `local-disclaimer-${Date.now()}`,
+            role: "assistant",
+            content: DISCLAIMER_MESSAGE,
+            createdAt: new Date().toISOString(),
+          })
+        }
+
+        return next
+      })
     }
 
     socket.on("typing", handleTyping)
     socket.on("messageResponse", handleMessageResponse)
 
     return () => {
+      clearNoResponseTimeout()
       socket.off("typing", handleTyping)
       socket.off("messageResponse", handleMessageResponse)
     }
@@ -124,13 +184,29 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const sendMessage = () => {
     if (!inputText.trim() || !session?.user?.id) return
 
+    setChatError(null)
+    startNoResponseTimeout()
+
     const userMessage = {
+      id: `local-${Date.now()}`,
       role: "user" as const,
       content: inputText,
       createdAt: new Date().toISOString(),
     }
 
-    setMessages((prev) => [...prev, userMessage])
+    setMessages((prev) => {
+      const next = [...prev, userMessage]
+
+      const nextUserMessageCount = next.reduce(
+        (count, msg) => (msg.role === "user" ? count + 1 : count),
+        0,
+      )
+      if (nextUserMessageCount % 10 === 0) {
+        pendingDisclaimerCountRef.current += 1
+      }
+
+      return next
+    })
 
     socket?.emit("sendMessage", {
       userId: session.user.id,
@@ -148,8 +224,8 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     titleContainerStyle: {
       width: "100%",
       flexDirection: "row",
-      justifyContent: "flex-start",
-      marginLeft: 20,
+      justifyContent: "center",
+      alignItems: "center",
       gap: spacing.sm,
     },
     titleImage: require("../../assets/images/eric-face.png"),
@@ -180,17 +256,22 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
     <Screen
       contentContainerStyle={{ flex: 1 }}
       safeAreaEdges={["bottom"]}
-      preset="auto"
-      // keyboardShouldPersistTaps="handled"
-      keyboardBottomOffset={0}
+      // Standard chat layout: messages scroll, composer fixed above keyboard.
+      // Avoid wrapping the whole screen in a keyboard-aware scroll view (causes Android scroll issues).
+      preset="fixed"
+      keyboardOffset={headerHeight}
     >
       <View style={{ flex: 1 }}>
         <ScrollView
           ref={scrollViewRef}
           style={{ flex: 1, paddingHorizontal: spacing.sm }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: "flex-end",
+            // Ensure last message isn't obscured by the composer.
+            paddingBottom: spacing.lg + insets.bottom,
           }}
         >
           {messages.length === 0 && (
@@ -208,18 +289,35 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
             </Animated.View>
           )}
 
-          {messages.map((msg, index) => (
-            <View
-              key={msg.id || index}
-              style={msg.role === "user" ? themed($userMessage) : themed($ericMessage)}
-            >
-              <Text
-                style={msg.role === "user" ? themed($userMessageText) : themed($ericMessageText)}
-              >
-                {msg.content}
-              </Text>
-            </View>
-          ))}
+          {messages.map((msg, index) =>
+            (() => {
+              const isDisclaimer =
+                msg.id?.startsWith("local-disclaimer-") || msg.content === DISCLAIMER_MESSAGE
+
+              if (isDisclaimer) {
+                return (
+                  <View key={msg.id || index} style={themed($disclaimerBanner)}>
+                    <Text style={themed($disclaimerText)}>{msg.content}</Text>
+                  </View>
+                )
+              }
+
+              return (
+                <View
+                  key={msg.id || index}
+                  style={msg.role === "user" ? themed($userMessage) : themed($ericMessage)}
+                >
+                  <Text
+                    style={
+                      msg.role === "user" ? themed($userMessageText) : themed($ericMessageText)
+                    }
+                  >
+                    {msg.content}
+                  </Text>
+                </View>
+              )
+            })(),
+          )}
 
           {isTyping && (
             <View style={themed($typingIndicator)}>
@@ -228,7 +326,18 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
           )}
         </ScrollView>
 
-        <View style={themed($textInputContainer)}>
+        {chatError && (
+          <View style={themed($chatErrorContainer)}>
+            <Text style={themed($chatErrorText)}>{chatError}</Text>
+          </View>
+        )}
+        <View
+          style={[
+            themed($textInputContainer),
+            // Ensure the composer sits above the home indicator on iOS and isn't clipped on Android.
+            { paddingBottom: Math.max(insets.bottom, spacing.sm) },
+          ]}
+        >
           <TextInput
             style={themed($textInput)}
             value={inputText}
@@ -238,6 +347,7 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
             onSubmitEditing={sendMessage}
             editable={connected && !isTyping}
             multiline
+            blurOnSubmit={false}
           />
           <Button
             onPress={sendMessage}
@@ -289,12 +399,42 @@ const $userMessageText: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.palette.primary900,
 })
 
+const $disclaimerBanner: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  marginVertical: spacing.xs,
+  borderRadius: 12,
+  backgroundColor: colors.palette.neutral200,
+  borderWidth: 1,
+  borderColor: colors.palette.neutral400,
+  alignSelf: "center",
+  maxWidth: "95%",
+})
+
+const $disclaimerText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.palette.neutral800,
+  lineHeight: 16,
+  textAlign: "center",
+})
+
 const $sendButton: ThemedStyle<ViewStyle> = () => ({
   padding: 0,
   borderRadius: 999,
   minHeight: 40,
   height: 45,
   maxHeight: 50,
+})
+
+const $chatErrorContainer: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
+  paddingHorizontal: spacing.sm,
+  paddingVertical: spacing.xs,
+  backgroundColor: colors.background,
+})
+
+const $chatErrorText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.error,
+  fontSize: 14,
+  textAlign: "center",
 })
 
 const $textInputContainer: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({

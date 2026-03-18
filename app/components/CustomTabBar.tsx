@@ -1,12 +1,14 @@
 import React, { useCallback } from "react"
 import { View, TouchableOpacity, StyleSheet, Dimensions, ViewStyle } from "react-native"
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { HomeSimple, OpenBook, ChatLinesSolid } from "iconoir-react-native"
+
 import { Text } from "@/components/Text"
 import { useSocket } from "@/context/AIChatContext"
+import { useSubscription } from "@/context/InAppSubscriptionContext"
+import { usePaywall } from "@/context/PaywallContext"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { useSubscription } from "@/context/InAppSubscriptionContext"
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 
 const { width } = Dimensions.get("window")
 
@@ -14,14 +16,15 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
   const { themed } = useAppTheme()
   const { unreadCount } = useSocket()
   const { checkForActiveSubscription } = useSubscription()
+  const { openPaywall } = usePaywall()
 
   const handleNavigateToChat = useCallback(() => {
     if (checkForActiveSubscription()) {
       navigation.navigate("AIChat")
     } else {
-      navigation.navigate("SettingsMain", { screen: "SettingsSubscription" })
+      openPaywall({ source: "Chat", onSubscribed: () => navigation.navigate("AIChat") })
     }
-  }, [checkForActiveSubscription, navigation])
+  }, [checkForActiveSubscription, navigation, openPaywall])
 
   return (
     <View style={styles.container}>
@@ -72,6 +75,7 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
             <ChatLinesSolid color="#fff" height={32} width={32} />
             {unreadCount > 0 && <View style={themed($badge)}></View>}
           </View>
+          <Text style={{ fontSize: 10, lineHeight: 15, marginTop: 2 }}>Chat</Text>
         </TouchableOpacity>
 
         {/* Resources Tab */}
@@ -89,7 +93,14 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
             })
 
             if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name)
+              if (checkForActiveSubscription()) {
+                navigation.navigate(route.name)
+              } else {
+                openPaywall({
+                  source: "Resources",
+                  onSubscribed: () => navigation.navigate(route.name),
+                })
+              }
             }
           }
 
@@ -166,12 +177,12 @@ const styles = StyleSheet.create({
     elevation: 8,
     height: 60,
     justifyContent: "center",
+    position: "relative",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     width: 60,
-    position: "relative",
   },
   container: {
     position: "relative",

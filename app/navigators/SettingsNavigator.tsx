@@ -1,12 +1,13 @@
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
-import { WelcomeScreen } from "@/screens/WelcomeScreen"
+
+import { SettingsAccountDeleteScreen } from "@/screens/Settings/SettingsAccountDeleteScreen"
+import { SettingsCheckInScreen } from "@/screens/Settings/SettingsCheckInScreen"
+import { SettingsConversationScreen } from "@/screens/Settings/SettingsConversation"
 import { SettingsMainScreen } from "@/screens/Settings/SettingsMainScreen"
 import { SettingsProfileScreen } from "@/screens/Settings/SettingsProfileScreen"
-import { SettingsSubscriptionScreen } from "@/screens/Settings/SettingsSubscription"
 import { SettingsSecurityScreen } from "@/screens/Settings/SettingsSecurity"
-import { SettingsConversationScreen } from "@/screens/Settings/SettingsConversation"
-import { SettingsCheckInScreen } from "@/screens/Settings/SettingsCheckInScreen"
-import { SettingsAccountDeleteScreen } from "@/screens/Settings/SettingsAccountDeleteScreen"
+import { SettingsSubscriptionScreen } from "@/screens/Settings/SettingsSubscription"
+import { WelcomeScreen } from "@/screens/WelcomeScreen"
 
 export type SettingsNavigatorParamList = {
   SettingsMenu: undefined

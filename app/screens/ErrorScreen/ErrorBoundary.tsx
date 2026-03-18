@@ -1,7 +1,8 @@
 import { Component, ErrorInfo, ReactNode } from "react"
 
-import { ErrorDetails } from "./ErrorDetails"
 import { posthog } from "@/utils/posthog"
+
+import { ErrorDetails } from "./ErrorDetails"
 
 interface Props {
   children: ReactNode

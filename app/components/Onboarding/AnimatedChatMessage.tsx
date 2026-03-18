@@ -9,10 +9,11 @@ import Animated, {
   Easing,
   runOnJS,
 } from "react-native-reanimated"
+
 import { Text } from "@/components/Text"
+import { TxKeyPath } from "@/i18n"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { TxKeyPath } from "@/i18n"
 
 interface AnimatedChatMessageProps {
   message: string | TxKeyPath

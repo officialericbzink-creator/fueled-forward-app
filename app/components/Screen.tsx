@@ -1,7 +1,8 @@
-import { ReactNode, useRef, useState } from "react"
+import { ReactNode, useEffect, useRef, useState } from "react"
 import {
   KeyboardAvoidingView,
   KeyboardAvoidingViewProps,
+  Keyboard,
   LayoutChangeEvent,
   Platform,
   ScrollView,
@@ -12,13 +13,11 @@ import {
 } from "react-native"
 import { useScrollToTop } from "@react-navigation/native"
 import { SystemBars, SystemBarsProps, SystemBarStyle } from "react-native-edge-to-edge"
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 
 import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
 import { ExtendedEdge, useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-
-export const DEFAULT_BOTTOM_OFFSET = 50
 
 interface BaseScreenProps {
   /**
@@ -63,6 +62,12 @@ interface BaseScreenProps {
   KeyboardAvoidingViewProps?: KeyboardAvoidingViewProps
 }
 
+const isIos = Platform.OS === "ios"
+
+// On iOS, `KeyboardAwareScrollView` already scrolls focused inputs into view quite aggressively.
+// A non-zero default `extraScrollHeight` often makes fields jump too high.
+export const DEFAULT_BOTTOM_OFFSET = isIos ? 0 : 50
+
 interface FixedScreenProps extends BaseScreenProps {
   preset?: "fixed"
 }
@@ -90,8 +95,6 @@ interface AutoScreenProps extends Omit<ScrollScreenProps, "preset"> {
 
 export type ScreenProps = ScrollScreenProps | FixedScreenProps | AutoScreenProps
 
-const isIos = Platform.OS === "ios"
-
 type ScreenPreset = "fixed" | "scroll" | "auto"
 
 /**
@@ -118,9 +121,27 @@ function useAutoPreset(props: AutoScreenProps): {
   const scrollViewHeight = useRef<null | number>(null)
   const scrollViewContentHeight = useRef<null | number>(null)
   const [scrollEnabled, setScrollEnabled] = useState(true)
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow"
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide"
+
+    const showSub = Keyboard.addListener(showEvent, () => setIsKeyboardVisible(true))
+    const hideSub = Keyboard.addListener(hideEvent, () => setIsKeyboardVisible(false))
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
 
   function updateScrollState() {
     if (scrollViewHeight.current === null || scrollViewContentHeight.current === null) return
+    if (preset === "auto" && isKeyboardVisible) {
+      if (!scrollEnabled) setScrollEnabled(true)
+      return
+    }
 
     // check whether content fits the screen then toggle scroll state according to it
     const contentFitsScreen = (function () {
@@ -176,7 +197,7 @@ function ScreenWithoutScrolling(props: ScreenProps) {
   const { style, contentContainerStyle, children, preset } = props
   return (
     <View style={[$outerStyle, style]}>
-      <View style={[$innerStyle, preset === "fixed" && $justifyFlexEnd, contentContainerStyle]}>
+      <View style={[$innerStyle, contentContainerStyle]}>
         {children}
       </View>
     </View>
@@ -197,7 +218,7 @@ function ScreenWithScrolling(props: ScreenProps) {
     style,
   } = props as ScrollScreenProps
 
-  const ref = useRef<ScrollView>(null)
+  const ref = useRef<any>(null)
 
   const { scrollEnabled, onContentSizeChange, onLayout } = useAutoPreset(props as AutoScreenProps)
 
@@ -207,10 +228,11 @@ function ScreenWithScrolling(props: ScreenProps) {
 
   return (
     <KeyboardAwareScrollView
-      bottomOffset={keyboardBottomOffset}
-      {...{ keyboardShouldPersistTaps, scrollEnabled, ref }}
+      enableOnAndroid
+      extraScrollHeight={keyboardBottomOffset}
+      {...({ keyboardShouldPersistTaps, scrollEnabled, ref } as any)}
       {...ScrollViewProps}
-      onLayout={(e) => {
+      onLayout={(e: LayoutChangeEvent) => {
         onLayout(e)
         ScrollViewProps?.onLayout?.(e)
       }}
@@ -221,6 +243,7 @@ function ScreenWithScrolling(props: ScreenProps) {
       style={[$outerStyle, ScrollViewProps?.style, style]}
       contentContainerStyle={[
         $innerStyle,
+        { paddingBottom: keyboardBottomOffset },
         ScrollViewProps?.contentContainerStyle,
         contentContainerStyle,
       ]}
@@ -254,6 +277,16 @@ export function Screen(props: ScreenProps) {
 
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
 
+  const content = isNonScrolling(props.preset) ? (
+    <ScreenWithoutScrolling {...props} />
+  ) : (
+    <ScreenWithScrolling {...props} />
+  )
+
+  const keyboardAvoidingEnabled = isNonScrolling(props.preset)
+    ? (KeyboardAvoidingViewProps?.enabled ?? true)
+    : (KeyboardAvoidingViewProps?.enabled ?? false)
+
   return (
     <View
       style={[
@@ -271,13 +304,10 @@ export function Screen(props: ScreenProps) {
         behavior={isIos ? "padding" : "height"}
         keyboardVerticalOffset={keyboardOffset}
         {...KeyboardAvoidingViewProps}
+        enabled={keyboardAvoidingEnabled}
         style={[$styles.flex1, KeyboardAvoidingViewProps?.style]}
       >
-        {isNonScrolling(props.preset) ? (
-          <ScreenWithoutScrolling {...props} />
-        ) : (
-          <ScreenWithScrolling {...props} />
-        )}
+        {content}
       </KeyboardAvoidingView>
     </View>
   )
@@ -285,18 +315,12 @@ export function Screen(props: ScreenProps) {
 
 const $containerStyle: ViewStyle = {
   flex: 1,
-  height: "100%",
   width: "100%",
 }
 
 const $outerStyle: ViewStyle = {
   flex: 1,
-  height: "100%",
   width: "100%",
-}
-
-const $justifyFlexEnd: ViewStyle = {
-  justifyContent: "flex-end",
 }
 
 const $innerStyle: ViewStyle = {

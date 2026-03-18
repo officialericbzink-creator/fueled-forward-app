@@ -1,4 +1,5 @@
 import { posthog } from "@/utils/posthog"
+
 import { BaseApi } from "./base-api"
 import type { OnboardingStatusResponse, OnboardingStepData, OnboardingStepResponse } from "./types"
 

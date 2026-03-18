@@ -2,15 +2,16 @@
 import React, { useMemo, forwardRef, useCallback } from "react"
 import { View, ViewStyle, TouchableOpacity } from "react-native"
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from "@gorhom/bottom-sheet"
-import { Checkbox } from "@/components/Toggle/Checkbox"
-import { Text } from "@/components/Text"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+
 import { Button } from "@/components/Button"
+import { Text } from "@/components/Text"
+import { Checkbox } from "@/components/Toggle/Checkbox"
+import { StrapiResource, StrapiResourceCategory } from "@/services/api/types"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import { resourceCategories, resourceTypes, resources } from "../../lib/mockData/resources"
 
-import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { StrapiResource, StrapiResourceCategory } from "@/services/api/types"
+import { resourceCategories, resourceTypes, resources } from "../../lib/mockData/resources"
 
 const READ_TIME_OPTIONS = ["5 min", "10 min", "15+ min"] as const
 
@@ -27,10 +28,24 @@ interface FilterBottomSheetProps {
   category: string
   categories: StrapiResourceCategory[]
   resourcesData: StrapiResource[] | undefined
+  recommendedCategories?: string[]
+  recommendedTabKey?: string
 }
 
 const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
-  ({ filters, onApplyFilters, searchText, category, resourcesData, categories }, ref) => {
+  (
+    {
+      filters,
+      onApplyFilters,
+      searchText,
+      category,
+      resourcesData,
+      categories,
+      recommendedCategories = [],
+      recommendedTabKey,
+    },
+    ref,
+  ) => {
     const snapPoints = useMemo(() => ["50%", "85%"], [])
     const [tempFilters, setTempFilters] = React.useState<FilterState>(filters)
     const insets = useSafeAreaInsets()
@@ -44,38 +59,8 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
       setTempFilters(filters)
     }, [filters])
 
-    // Calculate result count based on temp filters (live preview)
-    const resultCount = useMemo(() => {
-      if (!resourcesData) return 0
-
-      return resourcesData.filter((resource) => {
-        const matchesSearchText = searchText
-          ? resource.title.toLowerCase().includes(searchText.toLowerCase()) ||
-            resource.summary.toLowerCase().includes(searchText.toLowerCase())
-          : true
-
-        const matchesCategory = category === "All" || resource.category.name === category
-
-        const matchesFilterCategory =
-          tempFilters.categories.length === 0 ||
-          tempFilters.categories.includes(resource.category.name)
-
-        const matchesFilterType =
-          tempFilters.types.length === 0 || tempFilters.types.includes(resource.resource_type.name)
-
-        const matchesFilterReadTime =
-          tempFilters.readTimes.length === 0 ||
-          tempFilters.readTimes.includes(resource.read_time.name)
-
-        return (
-          matchesSearchText &&
-          matchesCategory &&
-          matchesFilterCategory &&
-          matchesFilterType &&
-          matchesFilterReadTime
-        )
-      }).length
-    }, [tempFilters, searchText, category, resourcesData])
+    // Note: with server-side pagination/filtering, we can't reliably preview
+    // the *total* result count here without another API call.
 
     const handleClearAll = useCallback(() => {
       setTempFilters({
@@ -159,14 +144,16 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
           <View style={themed($section)}>
             <Text tx="resources:filter.categoryText" preset="subheading" size="md" />
             <View style={themed($checkboxGroup)}>
-              {categories.slice(1).map((category) => (
-                <Checkbox
-                  key={category.id}
-                  label={category.name}
-                  value={tempFilters.categories.includes(category.name)}
-                  onValueChange={() => handleToggleCategory(category.name)}
-                />
-              ))}
+              {categories
+                .filter((c) => c.name.trim().toLowerCase() !== "all")
+                .map((category) => (
+                  <Checkbox
+                    key={category.id}
+                    label={category.name}
+                    value={tempFilters.categories.includes(category.name)}
+                    onValueChange={() => handleToggleCategory(category.name)}
+                  />
+                ))}
             </View>
           </View>
 
@@ -202,11 +189,7 @@ const FilterBottomSheet = forwardRef<BottomSheet, FilterBottomSheetProps>(
 
           {/* Footer Button */}
           <View style={themed($footer)}>
-            <Button
-              text={`See ${resultCount} Result${resultCount !== 1 ? "s" : ""}`}
-              onPress={handleApply}
-              style={{ width: "100%" }}
-            />
+            <Button text="Apply filters" onPress={handleApply} style={{ width: "100%" }} />
           </View>
         </BottomSheetScrollView>
       </BottomSheet>

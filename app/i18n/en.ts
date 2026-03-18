@@ -40,13 +40,11 @@ const en = {
     },
     importantDateScreen: {
       messageOne: "Can you share when this began to happen?",
-      messageTwo: "This could be a traumatic event, loss, or significant life change.",
+      messageTwo: "This could be a traumatic event, loss, or significant life change. Describe it.",
     },
     therapyScreen: {
       messageOne: "Are you currently in therapy?",
       messageTwo: "This helps us understand your current support system",
-      inTherapyText: "How long have you been in therapy?",
-      notInTherapyText: "Would you like to share why not? (optional)",
     },
     paywallScreen: {
       heading: "Your healing journey, supported every step.",

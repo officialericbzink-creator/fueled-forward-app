@@ -1,7 +1,9 @@
 import React, { FC } from "react"
 import { View, StyleSheet, Animated, ViewStyle } from "react-native"
-import type { ThemedStyle } from "@/theme/types"
+
 import { useAppTheme } from "@/theme/context"
+import type { ThemedStyle } from "@/theme/types"
+
 interface ProgressBarProps {
   progress: number
   maxSteps?: number

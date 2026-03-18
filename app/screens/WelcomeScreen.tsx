@@ -1,15 +1,15 @@
 import { FC } from "react"
 import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
 
+import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { isRTL } from "@/i18n"
+import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
 import type { ThemedStyle } from "@/theme/types"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-import { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { Button } from "@/components/Button"
 
 const welcomeBg = require("@assets/images/welcome-screen-bg.png")
 

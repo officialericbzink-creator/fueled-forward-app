@@ -1,39 +1,98 @@
 import React, { FC, useRef, useMemo, useCallback, useEffect } from "react"
-import { FlatList, ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { Filter, Search } from "iconoir-react-native"
+import {
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native"
 import BottomSheet, { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
+import { Filter, Search } from "iconoir-react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
+import { Button } from "@/components/Button"
 import { Card } from "@/components/Card"
+import FilterBottomSheet, { FilterState } from "@/components/ResourceFilterSheet"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { useAuth } from "@/context/AuthContext"
+import { useGetProfile } from "@/hooks/profile/get-profile"
+import { useGetResourceCategories } from "@/hooks/resources/get-resource-categories"
+import { useGetResources } from "@/hooks/resources/get-resource-list"
 import { ResourcesStackScreenProps } from "@/navigators/ResourcesNavigator"
 import { useAppTheme } from "@/theme/context"
 import { spacing } from "@/theme/spacing"
 import { ThemedStyle } from "@/theme/types"
-
-import FilterBottomSheet, { FilterState } from "@/components/ResourceFilterSheet"
 import { resourceTypeColors } from "@/utils/constants"
-import { useGetResources } from "@/hooks/resources/get-resource-list"
-import { useGetResourceCategories } from "@/hooks/resources/get-resource-categories"
 
 interface ResourcesHomeScreenProps extends ResourcesStackScreenProps<"ResourcesHome"> {}
 
+const RECOMMENDED_TAB = "__recommended__"
+const PAGE_SIZE = 25
+
 export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }) => {
   const [searchText, setSearchText] = React.useState("")
-  const [category, setCategory] = React.useState("All")
+  const [debouncedSearchText, setDebouncedSearchText] = React.useState("")
+  const [category, setCategory] = React.useState<string>(RECOMMENDED_TAB)
   const [filters, setFilters] = React.useState<FilterState>({
     categories: [],
     types: [],
     readTimes: [],
   })
 
+  const { user } = useAuth()
+  const { data: profileData } = useGetProfile(user?.id || "")
+
   const {
-    data: resourcesData,
+    resources,
+    data: resourcesPages,
     isLoading: resourcesLoading,
+    refetch: refetchResources,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     // isError: resourcesError,
-  } = useGetResources()
+  } = useGetResources(
+    useMemo(() => {
+      const rawStruggles = profileData?.profile?.struggles ?? []
+      const recommendedCategories = rawStruggles.filter(Boolean)
+
+      const tabCategories =
+        category === RECOMMENDED_TAB
+          ? recommendedCategories.length > 0
+            ? recommendedCategories
+            : undefined
+          : [category]
+
+      // Intersect tab categories with filter-sheet categories (if any)
+      const effectiveCategories = (() => {
+        if (filters.categories.length === 0) return tabCategories
+        if (!tabCategories) return filters.categories
+        const intersection = tabCategories.filter((c) => filters.categories.includes(c))
+        // If the user has both filters active but they don't overlap, we should return 0 results
+        // (not "all resources"). We do that by querying a category that won't exist.
+        return intersection.length > 0 ? intersection : ["__no_match__"]
+      })()
+
+      return {
+        search: debouncedSearchText,
+        categories: effectiveCategories,
+        types: filters.types,
+        readTimes: filters.readTimes,
+        pageSize: PAGE_SIZE,
+      }
+    }, [
+      profileData?.profile?.struggles,
+      category,
+      filters.categories,
+      filters.types,
+      filters.readTimes,
+      debouncedSearchText,
+    ]),
+  )
   const {
     data: categories,
     // isLoading: categoriesLoading,
@@ -44,50 +103,38 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
   // const isError = resourcesError || categoriesError
 
   const bottomSheetRef = useRef<BottomSheet>(null)
+  const listRef = useRef<FlatList>(null)
+  const didMountRef = useRef(false)
 
   const {
     themed,
     theme: { colors },
   } = useAppTheme()
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearchText(searchText), 250)
+    return () => clearTimeout(t)
+  }, [searchText])
+
   // Check if any filters are active (excluding "All" category selection)
   const hasActiveFilters = useMemo(() => {
     return filters.categories.length > 0 || filters.types.length > 0 || filters.readTimes.length > 0
   }, [filters])
 
-  // Filter resources based on search text, category, and advanced filters
-  const filteredResources = useMemo(() => {
-    if (!resourcesData) return []
+  // Explicitly refetch on tab switching and reset scroll position
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false })
+    refetchResources()
+  }, [category, refetchResources])
 
-    return resourcesData.filter((resource) => {
-      // Search filter
-      const matchesSearchText = searchText
-        ? resource.title.toLowerCase().includes(searchText.toLowerCase()) ||
-          resource.summary.toLowerCase().includes(searchText.toLowerCase())
-        : true
-
-      // Category filter (from tabs)
-      const matchesCategory = category === "All" || resource.category.name === category
-
-      // Advanced filters (from bottom sheet)
-      const matchesFilterCategory =
-        filters.categories.length === 0 || filters.categories.includes(resource.category.name)
-
-      const matchesFilterType =
-        filters.types.length === 0 || filters.types.includes(resource.resource_type.name)
-
-      const matchesFilterReadTime =
-        filters.readTimes.length === 0 || filters.readTimes.includes(resource.read_time.name)
-
-      return (
-        matchesSearchText &&
-        matchesCategory &&
-        matchesFilterCategory &&
-        matchesFilterType &&
-        matchesFilterReadTime
-      )
-    })
-  }, [resourcesData, searchText, category, filters])
+  // When filters/search change, reset scroll so it’s obvious results updated.
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true
+      return
+    }
+    listRef.current?.scrollToOffset({ offset: 0, animated: false })
+  }, [debouncedSearchText, filters])
 
   const handleOpenFilters = useCallback(() => {
     bottomSheetRef.current?.expand()
@@ -95,7 +142,11 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
 
   const handleApplyFilters = useCallback((newFilters: FilterState) => {
     setFilters(newFilters)
+    listRef.current?.scrollToOffset({ offset: 0, animated: false })
   }, [])
+
+  const lastPageCount = resourcesPages?.pages?.[resourcesPages.pages.length - 1]?.data?.length ?? 0
+  const canLoadMore = Boolean(hasNextPage) || lastPageCount === PAGE_SIZE
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -165,10 +216,10 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
                   alignItems: "center",
                 }}
               >
-                <TouchableOpacity key={"All"} onPress={() => setCategory("All")}>
+                <TouchableOpacity key={"Recommended"} onPress={() => setCategory(RECOMMENDED_TAB)}>
                   <Text
                     style={
-                      category === "All"
+                      category === RECOMMENDED_TAB
                         ? {
                             paddingHorizontal: spacing.sm,
                             backgroundColor: colors.palette.neutral200,
@@ -187,43 +238,49 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
                           }
                     }
                   >
-                    All
+                    Recommended
                   </Text>
                 </TouchableOpacity>
-                {categories.map((resource) => (
-                  <TouchableOpacity key={resource.name} onPress={() => setCategory(resource.name)}>
-                    <Text
-                      style={
-                        category === resource.name
-                          ? {
-                              paddingHorizontal: spacing.sm,
-                              backgroundColor: colors.palette.neutral200,
-                              borderBottomColor: colors.palette.neutral800,
-                              fontSize: 12,
-                              borderBottomWidth: 2,
-                              color: colors.palette.primary700,
-                            }
-                          : {
-                              paddingHorizontal: spacing.sm,
-                              fontSize: 12,
-                              borderBottomWidth: 2,
-                              borderBottomColor: colors.palette.neutral200,
-                              backgroundColor: colors.palette.neutral200,
-                              color: colors.palette.primary500,
-                            }
-                      }
+                {categories
+                  .filter((c) => c.name.trim().toLowerCase() !== "all")
+                  .map((resource) => (
+                    <TouchableOpacity
+                      key={resource.name}
+                      onPress={() => setCategory(resource.name)}
                     >
-                      {resource.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={
+                          category === resource.name
+                            ? {
+                                paddingHorizontal: spacing.sm,
+                                backgroundColor: colors.palette.neutral200,
+                                borderBottomColor: colors.palette.neutral800,
+                                fontSize: 12,
+                                borderBottomWidth: 2,
+                                color: colors.palette.primary700,
+                              }
+                            : {
+                                paddingHorizontal: spacing.sm,
+                                fontSize: 12,
+                                borderBottomWidth: 2,
+                                borderBottomColor: colors.palette.neutral200,
+                                backgroundColor: colors.palette.neutral200,
+                                color: colors.palette.primary500,
+                              }
+                        }
+                      >
+                        {resource.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
               </View>
             </ScrollView>
           )}
 
           {/* FlatList - Takes remaining space and scrolls */}
           <FlatList
-            data={filteredResources}
+            ref={listRef}
+            data={resources}
             contentContainerStyle={{
               backgroundColor: colors.palette.primary100,
               gap: spacing.sm,
@@ -242,7 +299,35 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
                 message={resourcesLoading ? "Please wait" : "Try adjusting your search or filters"}
               />
             )}
+            ListFooterComponent={() => {
+              if (isFetchingNextPage) {
+                return (
+                  <View style={{ paddingVertical: spacing.md }}>
+                    <ActivityIndicator />
+                  </View>
+                )
+              }
+              if (!canLoadMore) {
+                return (
+                  <View style={{ paddingVertical: spacing.md, alignItems: "center" }}>
+                    <Text size="xxs" text={`Showing ${resources.length}`} />
+                  </View>
+                )
+              }
+              return (
+                <View style={{ paddingVertical: spacing.md, gap: spacing.xs }}>
+                  <Text size="xxs" text={`Showing ${resources.length}`} />
+                  <Button text="See more" onPress={() => fetchNextPage()} />
+                </View>
+              )
+            }}
             keyExtractor={(el) => el.documentId}
+            onEndReachedThreshold={0.5}
+            onEndReached={() => {
+              if (canLoadMore && !isFetchingNextPage) {
+                fetchNextPage()
+              }
+            }}
             renderItem={(item) => (
               <Card
                 onPress={() =>
@@ -312,7 +397,9 @@ export const ResourcesHomeScreen: FC<ResourcesHomeScreenProps> = ({ navigation }
           searchText={searchText}
           category={category}
           categories={categories || []}
-          resourcesData={resourcesData}
+          resourcesData={resources}
+          recommendedCategories={profileData?.profile?.struggles ?? []}
+          recommendedTabKey={RECOMMENDED_TAB}
         />
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

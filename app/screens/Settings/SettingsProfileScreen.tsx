@@ -9,27 +9,34 @@ import {
   ViewStyle,
 } from "react-native"
 import * as ImagePicker from "expo-image-picker"
+import * as FileSystem from "expo-file-system/legacy"
 import Toast from "react-native-toast-message"
 
-import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
+import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { useHeader } from "@/utils/useHeader"
-import { ThemedStyle } from "@/theme/types"
-import { useAppTheme } from "@/theme/context"
-import { useAuth } from "@/context/AuthContext"
 import { TextField } from "@/components/TextField"
 import { Checkbox } from "@/components/Toggle/Checkbox"
+import { useAuth } from "@/context/AuthContext"
 import { useGetProfile } from "@/hooks/profile/get-profile"
+import { useUpdateProfile } from "@/hooks/profile/update-profile"
+import { useUploadAvatar } from "@/hooks/profile/upload-avatar"
+import { SettingsStackScreenProps } from "@/navigators/SettingsNavigator"
 import {
   profileFormReducer,
   initialFormState,
   ProfileFormActionType,
 } from "@/reducers/profile-form-reducer"
-import { Button } from "@/components/Button"
-import { useUpdateProfile } from "@/hooks/profile/update-profile"
-import { useUploadAvatar } from "@/hooks/profile/upload-avatar"
-import { STRUGGLE_OPTIONS, DEFAULT_AVATAR } from "@/utils/constants"
+import { useAppTheme } from "@/theme/context"
+import { ThemedStyle } from "@/theme/types"
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  DEFAULT_AVATAR,
+  MAX_AVATAR_UPLOAD_BYTES,
+  STRUGGLE_OPTIONS,
+  avatarExtensionForMimeType,
+} from "@/utils/constants"
+import { useHeader } from "@/utils/useHeader"
 // import { useNavigation } from "@react-navigation/native"
 interface SettingsMenuScreenProps extends SettingsStackScreenProps<"SettingsProfile"> {}
 
@@ -60,18 +67,38 @@ export const SettingsProfileScreen: FC<SettingsMenuScreenProps> = ({ navigation 
       quality: 0.5,
     })
 
-    if (result) {
+    if (result && !result.canceled) {
       // try uploading to media service
       const asset = result.assets?.[0]
       if (!asset?.uri) {
         throw new Error("No image selected")
       }
 
+      const fileInfo = await FileSystem.getInfoAsync(asset.uri)
+      if (
+        fileInfo.exists &&
+        typeof fileInfo.size === "number" &&
+        fileInfo.size > MAX_AVATAR_UPLOAD_BYTES
+      ) {
+        Alert.alert(
+          "Image too large",
+          `Please choose an image smaller than ${Math.round(MAX_AVATAR_UPLOAD_BYTES / (1024 * 1024))}MB.`,
+        )
+        return
+      }
+
       const formData = new FormData()
 
-      const uriParts = asset.uri.split(".")
-      const fileExtension = uriParts[uriParts.length - 1]
-      const mimeType = asset.mimeType || `image/${fileExtension}`
+      const mimeType = asset.mimeType
+      if (!mimeType || !AVATAR_ALLOWED_MIME_TYPES.includes(mimeType as any)) {
+        Alert.alert(
+          "Unsupported image type",
+          `Please choose one of: ${AVATAR_ALLOWED_MIME_TYPES.join(", ")}.`,
+        )
+        return
+      }
+
+      const fileExtension = avatarExtensionForMimeType(mimeType)
 
       formData.append("file", {
         uri: asset.uri,

@@ -7,7 +7,6 @@
     "fallbackToCacheTimeout": 0,
     "url": "https://u.expo.dev/f219f452-ee86-4e74-84b3-ecfcfdadbd17"
   },
-  "newArchEnabled": true,
   "jsEngine": "hermes",
   "assetBundlePatterns": [
     "**/*"
@@ -18,8 +17,8 @@
       "foregroundImage": "./assets/images/ff-icon-1024.png",
       "backgroundImage": "./assets/images/ff-icon-1024.png"
     },
+    "softwareKeyboardLayoutMode": "resize",
     "allowBackup": false,
-    "edgeToEdgeEnabled": true,
     "package": "com.fueledforwardapp",
     "permissions": [
       "android.permission.RECORD_AUDIO"
