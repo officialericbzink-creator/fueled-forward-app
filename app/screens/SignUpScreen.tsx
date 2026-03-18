@@ -11,6 +11,7 @@ import { TextField, TextFieldAccessoryProps } from "@/components/TextField"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { setHomeWalkthroughNotDoneAfterRegister } from "@/utils/homeWalkthroughFlag"
 import { useHeader } from "@/utils/useHeader"
 
 import { authClient } from "../../lib/auth"
@@ -85,6 +86,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = ({ navigation }) => {
         name: "Default User",
       })
       if (response.data) {
+        setHomeWalkthroughNotDoneAfterRegister()
         // On successful sign up, the auth state should flip and AppNavigator
         // will mount the authenticated stack (which contains Onboarding).
         console.log(response.data)

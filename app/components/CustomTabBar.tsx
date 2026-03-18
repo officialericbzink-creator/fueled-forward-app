@@ -1,7 +1,8 @@
-import React, { useCallback } from "react"
+import React, { useCallback, useEffect } from "react"
 import { View, TouchableOpacity, StyleSheet, Dimensions, ViewStyle } from "react-native"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { HomeSimple, OpenBook, ChatLinesSolid } from "iconoir-react-native"
+import { CopilotStep, useCopilot, walkthroughable } from "react-native-copilot"
 
 import { Text } from "@/components/Text"
 import { useSocket } from "@/context/AIChatContext"
@@ -12,11 +13,21 @@ import { ThemedStyle } from "@/theme/types"
 
 const { width } = Dimensions.get("window")
 
+const CopilotBox = walkthroughable(View)
+
 export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const { themed } = useAppTheme()
   const { unreadCount } = useSocket()
   const { checkForActiveSubscription } = useSubscription()
   const { openPaywall } = usePaywall()
+  const { currentStep, visible } = useCopilot()
+
+  // Keep Home mounted so the Goals walkthrough step can measure after Resources tab step.
+  useEffect(() => {
+    if (visible && currentStep?.name === "resources_tab") {
+      navigation.navigate("Home")
+    }
+  }, [visible, currentStep, navigation])
 
   const handleNavigateToChat = useCallback(() => {
     if (checkForActiveSubscription()) {
@@ -65,18 +76,26 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
           )
         })}
 
-        {/* Center AI Chat Button */}
-        <TouchableOpacity
-          onPress={handleNavigateToChat}
-          style={styles.centerButton}
-          activeOpacity={0.7}
+        {/* Center AI Chat — Tools step */}
+        <CopilotStep
+          order={4}
+          name="tools_chat"
+          text="Tools: Tap Chat to talk to Eric anytime."
         >
-          <View style={styles.centerButtonInner}>
-            <ChatLinesSolid color="#fff" height={32} width={32} />
-            {unreadCount > 0 && <View style={themed($badge)}></View>}
-          </View>
-          <Text style={{ fontSize: 10, lineHeight: 15, marginTop: 2 }}>Chat</Text>
-        </TouchableOpacity>
+          <CopilotBox style={styles.centerButton}>
+            <TouchableOpacity
+              onPress={handleNavigateToChat}
+              style={{ alignItems: "center" }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.centerButtonInner}>
+                <ChatLinesSolid color="#fff" height={32} width={32} />
+                {unreadCount > 0 && <View style={themed($badge)}></View>}
+              </View>
+              <Text style={{ fontSize: 10, lineHeight: 15, marginTop: 2 }}>Chat</Text>
+            </TouchableOpacity>
+          </CopilotBox>
+        </CopilotStep>
 
         {/* Resources Tab */}
         {state.routes.map((route, index) => {
@@ -105,15 +124,24 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
           }
 
           return (
-            <TouchableOpacity key={index} onPress={onPress} style={styles.tab} activeOpacity={0.7}>
-              <OpenBook
-                height={24}
-                width={24}
-                color={isFocused ? "#212121" : "#8E8E93"}
-                strokeWidth={isFocused ? 2 : 1}
-              />
-              <Text style={{ fontSize: 10, lineHeight: 15 }}>{route.name}</Text>
-            </TouchableOpacity>
+            <CopilotStep
+              key={index}
+              order={5}
+              name="resources_tab"
+              text="Resources: Articles and tools to support your journey."
+            >
+              <CopilotBox style={styles.tab}>
+                <TouchableOpacity onPress={onPress} style={{ alignItems: "center" }} activeOpacity={0.7}>
+                  <OpenBook
+                    height={24}
+                    width={24}
+                    color={isFocused ? "#212121" : "#8E8E93"}
+                    strokeWidth={isFocused ? 2 : 1}
+                  />
+                  <Text style={{ fontSize: 10, lineHeight: 15 }}>{route.name}</Text>
+                </TouchableOpacity>
+              </CopilotBox>
+            </CopilotStep>
           )
         })}
       </View>

@@ -11,6 +11,7 @@ import Config from "@/config"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
+import { setHomeWalkthroughFromUser } from "@/utils/homeWalkthroughFlag"
 import { posthog } from "@/utils/posthog"
 import { useHeader } from "@/utils/useHeader"
 
@@ -55,6 +56,8 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         password: authPassword,
       })
       if (response.data) {
+        const sess = await authClient.getSession()
+        setHomeWalkthroughFromUser(sess.data?.user)
         posthog.capture("login_successful", {
           email: authEmail,
           timestamp: Date.now(),

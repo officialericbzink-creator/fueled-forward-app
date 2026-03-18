@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Image,
   ImageStyle,
@@ -35,9 +35,14 @@ import { CheckInDetails } from "@/services/api/types"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { AVG_MOOD, MOOD_IMAGES, MOOD_OPTIONS, STEP_QUESTIONS } from "@/utils/constants"
+import { storage } from "@/utils/storage"
 import { useHeader } from "@/utils/useHeader"
+import { useMMKVBoolean } from "react-native-mmkv"
+import { CopilotStep, useCopilot, walkthroughable } from "react-native-copilot"
 
 interface HomeScreenProps extends HomeCheckInStackScreenProps<"HomeDashboard"> {}
+
+const CopilotWrap = walkthroughable(View)
 
 export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   const { user } = useAuth()
@@ -46,6 +51,9 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   const { openPaywall } = usePaywall()
   const { hasAcceptedAIDisclosure, acceptDisclosure } = useAIDisclosure()
   const [showAIDisclosure, setShowAIDisclosure] = useState(false)
+  const [walkthroughDone, setWalkthroughDone] = useMMKVBoolean("homeWalkthrough.done", storage)
+  const { start, copilotEvents } = useCopilot()
+  const walkthroughDidStart = useRef(false)
 
   const [goalModalOpen, setGoalModalOpen] = useState(false)
   const [goalText, setGoalText] = useState("")
@@ -102,6 +110,24 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
       return () => clearTimeout(timer)
     }
   }, [hasAcceptedAIDisclosure, isLoading])
+
+  useEffect(() => {
+    const onStop = () => setWalkthroughDone(true)
+    copilotEvents.on("stop", onStop)
+    return () => {
+      copilotEvents.off("stop", onStop)
+    }
+  }, [copilotEvents, setWalkthroughDone])
+
+  useEffect(() => {
+    if (walkthroughDone || isLoading || showAIDisclosure || !hasAcceptedAIDisclosure) return
+    const t = setTimeout(() => {
+      if (walkthroughDidStart.current) return
+      walkthroughDidStart.current = true
+      void start()
+    }, 900)
+    return () => clearTimeout(t)
+  }, [walkthroughDone, isLoading, showAIDisclosure, hasAcceptedAIDisclosure, start])
 
   const handleAcceptAIDisclosure = () => {
     acceptDisclosure()
@@ -325,97 +351,113 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   return (
     <>
       <Screen preset="auto" contentContainerStyle={themed($screenContentContainer)}>
-        {/* Daily Check In Section */}
-        <Card
-          style={{ padding: spacing.md }}
-          HeadingComponent={
-            isLoading ? (
-              <View style={themed($cardHeaderRow)}>
-                <LoadingSkeleton height={40} width={40} style={{ borderRadius: 20 }} />
-                <View>
-                  <LoadingSkeleton height={28} width={140} style={{ marginBottom: spacing.sm }} />
-                  <LoadingSkeleton height={12} width={180} />
-                </View>
-              </View>
-            ) : (
-              <View style={themed($cardHeaderRow)}>
-                <Image source={require("@assets/images/eric-face.png")} />
-                <View>
-                  <Text size="lg" weight="semiBold">
-                    Hey {profile?.name}!
-                  </Text>
-                  <Text size="xs" weight="light" tx="home:checkInCard.subheading" />
-                </View>
-              </View>
-            )
-          }
-          ContentComponent={
-            isLoading ? (
-              <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
-                <LoadingSkeleton height={18} width={220} style={{ alignSelf: "center" }} />
-                <LoadingSkeleton height={55} width="100%" />
-              </View>
-            ) : (
-              renderDailyCheckInStatus()
-            )
-          }
-        />
+        {/* Check-ins */}
+        <CopilotStep
+          order={1}
+          name="checkins"
+          text="Check-ins: Complete your daily check-in to track mood and progress."
+        >
+          <CopilotWrap collapsable={false} style={{ width: "100%" }}>
+            <Card
+              style={{ padding: spacing.md }}
+              HeadingComponent={
+                isLoading ? (
+                  <View style={themed($cardHeaderRow)}>
+                    <LoadingSkeleton height={40} width={40} style={{ borderRadius: 20 }} />
+                    <View>
+                      <LoadingSkeleton height={28} width={140} style={{ marginBottom: spacing.sm }} />
+                      <LoadingSkeleton height={12} width={180} />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={themed($cardHeaderRow)}>
+                    <Image source={require("@assets/images/eric-face.png")} />
+                    <View>
+                      <Text size="lg" weight="semiBold">
+                        Hey {profile?.name}!
+                      </Text>
+                      <Text size="xs" weight="light" tx="home:checkInCard.subheading" />
+                    </View>
+                  </View>
+                )
+              }
+              ContentComponent={
+                isLoading ? (
+                  <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                    <LoadingSkeleton height={18} width={220} style={{ alignSelf: "center" }} />
+                    <LoadingSkeleton height={55} width="100%" />
+                  </View>
+                ) : (
+                  renderDailyCheckInStatus()
+                )
+              }
+            />
+          </CopilotWrap>
+        </CopilotStep>
 
-        {/* Goals Section */}
-        <Card
-          style={{ padding: spacing.md }}
-          HeadingComponent={
-            isLoading ? (
-              <LoadingCardHeader />
-            ) : (
-              <CardHeader
-                icon={require("@assets/images/goals-icon.png")}
-                title="home:goalsCard.heading"
-                rightComponent={
+        {/* Goals */}
+        <CopilotStep
+          order={2}
+          name="goals"
+          text="Goals: Set daily goals and check them off as you go."
+        >
+          <CopilotWrap collapsable={false} style={{ width: "100%" }}>
+            <Card
+              style={{ padding: spacing.md }}
+              HeadingComponent={
+                isLoading ? (
+                  <LoadingCardHeader />
+                ) : (
+                  <CardHeader
+                    icon={require("@assets/images/goals-icon.png")}
+                    title="home:goalsCard.heading"
+                    rightComponent={
+                      <Button
+                        style={{ minHeight: 16, paddingVertical: 4, alignItems: "center" }}
+                        textStyle={{ fontSize: 12 }}
+                        LeftAccessory={() => (
+                          <Plus color={colors.palette.primary900} width={20} height={20} />
+                        )}
+                        onPress={handleOpenGoalModal}
+                        tx="home:goalsCard.headerButtonText"
+                      ></Button>
+                    }
+                  />
+                )
+              }
+              ContentComponent={
+                isLoading ? (
+                  <View style={{ gap: spacing.sm }}>
+                    <LoadingSkeleton height={16} width="100%" style={{ marginTop: spacing.lg }} />
+                    <LoadingSkeleton height={16} width={150} style={{ alignSelf: "center" }} />
+                  </View>
+                ) : (
+                  renderGoalsContent()
+                )
+              }
+              FooterComponent={
+                isLoading ? (
+                  <LoadingSkeleton
+                    height={55}
+                    width="100%"
+                    style={{ marginTop: spacing.md, borderRadius: spacing.xs }}
+                  />
+                ) : goals.length === 0 ? (
                   <Button
-                    style={{ minHeight: 16, paddingVertical: 4, alignItems: "center" }}
-                    textStyle={{ fontSize: 12 }}
-                    LeftAccessory={() => (
-                      <Plus color={colors.palette.primary900} width={20} height={20} />
-                    )}
                     onPress={handleOpenGoalModal}
-                    tx="home:goalsCard.headerButtonText"
+                    LeftAccessory={() => (
+                      <Plus color={colors.palette.primary900} width={24} height={24} />
+                    )}
+                    style={{ marginTop: spacing.md, gap: spacing.sm }}
+                    tx="home:goalsCard.buttonText"
                   ></Button>
-                }
-              />
-            )
-          }
-          ContentComponent={
-            isLoading ? (
-              <View style={{ gap: spacing.sm }}>
-                <LoadingSkeleton height={16} width="100%" style={{ marginTop: spacing.lg }} />
-                <LoadingSkeleton height={16} width={150} style={{ alignSelf: "center" }} />
-              </View>
-            ) : (
-              renderGoalsContent()
-            )
-          }
-          FooterComponent={
-            isLoading ? (
-              <LoadingSkeleton
-                height={55}
-                width="100%"
-                style={{ marginTop: spacing.md, borderRadius: spacing.xs }}
-              />
-            ) : goals.length === 0 ? (
-              <Button
-                onPress={handleOpenGoalModal}
-                LeftAccessory={() => (
-                  <Plus color={colors.palette.primary900} width={24} height={24} />
-                )}
-                style={{ marginTop: spacing.md, gap: spacing.sm }}
-                tx="home:goalsCard.buttonText"
-              ></Button>
-            ) : (
-              <></>
-            )
-          }
-        />
+                ) : (
+                  <></>
+                )
+              }
+            />
+          </CopilotWrap>
+        </CopilotStep>
 
         {/* New Goal Modal */}
         <Modal visible={goalModalOpen} animationType="fade" transparent>
@@ -499,42 +541,50 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         </Modal>
 
-        {/* Previous Check Ins Section */}
-        <Card
-          style={{ padding: spacing.md }}
-          HeadingComponent={
-            isLoading ? (
-              <LoadingCardHeader />
-            ) : (
-              <CardHeader
-                icon={require("@assets/images/check-in-icon.png")}
-                title="home:checkInHistory.heading"
-              />
-            )
-          }
-          ContentComponent={
-            isLoading ? (
-              <View style={{ flexDirection: "row", gap: spacing.xs, marginTop: spacing.lg }}>
-                {Array(4)
-                  .fill(null)
-                  .map((_, index) => (
-                    <LoadingSkeleton
-                      key={index}
-                      height={68}
-                      width={56}
-                      style={{
-                        borderRadius: 4,
-                        borderWidth: 1,
-                        borderColor: colors.palette.primary100,
-                      }}
-                    />
-                  ))}
-              </View>
-            ) : (
-              renderCheckInHistory()
-            )
-          }
-        />
+        {/* Previous check-ins */}
+        <CopilotStep
+          order={3}
+          name="previous_checkins"
+          text="Previous check-ins: Tap a day to open details and review your past entries."
+        >
+          <CopilotWrap collapsable={false} style={{ width: "100%" }}>
+            <Card
+              style={{ padding: spacing.md }}
+              HeadingComponent={
+                isLoading ? (
+                  <LoadingCardHeader />
+                ) : (
+                  <CardHeader
+                    icon={require("@assets/images/check-in-icon.png")}
+                    title="home:checkInHistory.heading"
+                  />
+                )
+              }
+              ContentComponent={
+                isLoading ? (
+                  <View style={{ flexDirection: "row", gap: spacing.xs, marginTop: spacing.lg }}>
+                    {Array(4)
+                      .fill(null)
+                      .map((_, index) => (
+                        <LoadingSkeleton
+                          key={index}
+                          height={68}
+                          width={56}
+                          style={{
+                            borderRadius: 4,
+                            borderWidth: 1,
+                            borderColor: colors.palette.primary100,
+                          }}
+                        />
+                      ))}
+                  </View>
+                ) : (
+                  renderCheckInHistory()
+                )
+              }
+            />
+          </CopilotWrap>
+        </CopilotStep>
       </Screen>
 
       {/* Check-in Details Modal */}

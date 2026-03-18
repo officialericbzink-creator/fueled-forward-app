@@ -1,6 +1,7 @@
 import { TextStyle, ViewStyle } from "react-native"
 import { BottomTabScreenProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/native"
+import { CopilotProvider } from "react-native-copilot"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { CustomTabBar } from "@/components/CustomTabBar"
@@ -34,7 +35,11 @@ export const AuthNavigator = () => {
   } = useAppTheme()
   return (
     <CheckInProvider>
-      <Tab.Navigator
+      <CopilotProvider
+        labels={{ skip: "Skip", next: "Next", previous: "Back", finish: "Done" }}
+        backdropColor="rgba(0, 0, 0, 0.5)"
+      >
+        <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
@@ -58,7 +63,8 @@ export const AuthNavigator = () => {
           }}
         />*/}
         <Tab.Screen name={"Resources"} component={ResourcesNavigator} />
-      </Tab.Navigator>
+        </Tab.Navigator>
+      </CopilotProvider>
     </CheckInProvider>
   )
 }

@@ -2,6 +2,7 @@ import { createContext, FC, PropsWithChildren, useContext, useCallback, useEffec
 import { useQueryClient } from "@tanstack/react-query"
 import { SessionQueryParams } from "better-auth/types"
 
+import { clearHomeWalkthroughFlag } from "@/utils/homeWalkthroughFlag"
 import { posthog } from "@/utils/posthog"
 
 import { authClient } from "../../lib/auth"
@@ -81,6 +82,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
 
   const signOut = useCallback(async () => {
     try {
+      clearHomeWalkthroughFlag()
       await authClient.signOut()
       queryClient.clear()
     } catch (err) {
