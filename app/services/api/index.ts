@@ -6,6 +6,7 @@ import { GoalsApi } from "./goals-api"
 import { OnboardingApi } from "./onboarding-api"
 import { ProfileApi } from "./profile-api"
 import { ResourcesApi } from "./resources-api"
+import { EntriesApi } from "./entries-api"
 
 const DEFAULT_API_CONFIG = {
   url: Config.API_URL,
@@ -23,6 +24,7 @@ export const checkInApi = new CheckInApi(DEFAULT_API_CONFIG)
 export const goalsApi = new GoalsApi(DEFAULT_API_CONFIG)
 export const onboardingApi = new OnboardingApi(DEFAULT_API_CONFIG)
 export const chatApi = new ChatApi(DEFAULT_API_CONFIG)
+export const entriesApi = new EntriesApi(DEFAULT_API_CONFIG)
 
 // CMS (Strapi) API instances
 export const resourcesApi = new ResourcesApi(CMS_API_CONFIG, Config.STRAPI_TOKEN)

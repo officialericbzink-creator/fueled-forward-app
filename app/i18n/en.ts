@@ -87,6 +87,64 @@ const en = {
       emptyText: "No Check-Ins yet",
       emptySubText: "Complete your first check-in to start tracking your progress",
     },
+    recentJournal: {
+      heading: "Recent journal",
+      seeAll: "See all",
+      emptyText: "No entries yet. Open Tools → Journaling to write.",
+      startEntryButton: "Start Your Entry",
+    },
+  },
+  journal: {
+    toolsScreen: {
+      title: "Tools",
+      subtitle: "Explore supportive tools.",
+    },
+    listScreen: {
+      title: "Journaling",
+      newButton: "New",
+      emptyText: "No entries yet",
+      emptySubText: "Tap New to add your first entry.",
+    },
+    newEntryModal: {
+      title: "New entry",
+      optionJournalEntry: "New Journal Entry",
+      optionActivityLog: "New Activity Log",
+      optionVent: "Vent",
+    },
+    detailsModal: {
+      title: "Entry details",
+      summaryLabel: "Summary",
+      contentLabel: "Content",
+      insightsLabel: "Insights",
+    },
+    editor: {
+      titleJournalEntry: "Journal Entry",
+      titleActivityLog: "Activity Log",
+      titleVent: "Vent",
+      titleFallback: "Entry",
+      hint: "Type or use the mic on your keyboard to dictate — no extra setup needed.",
+      placeholder: "Write here…",
+      save: "Save",
+      saving: "Saving…",
+      toastSuccess: "Saved",
+      toastSuccessSub: "Your summary is ready.",
+      errorTitle: "Could not save",
+      errorSub: "Try again",
+    },
+  },
+  tools: {
+    journaling: {
+      title: "Journaling",
+      subtitle: "Private entries with gentle AI summaries",
+    },
+  },
+  snapshot: {
+    title: "Snapshot",
+    comingSoon: "Coming soon",
+  },
+  toolsPlaceholder: {
+    title: "Tools",
+    subtitle: "Journaling and more tools coming soon.",
   },
   checkIn: {},
   chat: {

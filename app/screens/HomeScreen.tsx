@@ -10,7 +10,7 @@ import {
   TextStyle,
   ViewStyle,
 } from "react-native"
-import { CheckCircle, Plus, Xmark } from "iconoir-react-native"
+import { CheckCircle, Journal, Plus, Xmark } from "iconoir-react-native"
 
 import { AIDisclosureModal } from "@/components/AIAcceptanceModal"
 import { Button } from "@/components/Button"
@@ -20,6 +20,7 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Checkbox } from "@/components/Toggle/Checkbox"
 import { useAuth } from "@/context/AuthContext"
+import { useJournal } from "@/context/JournalContext"
 import { useSubscription } from "@/context/InAppSubscriptionContext"
 import { usePaywall } from "@/context/PaywallContext"
 import { useGetCheckInHistory } from "@/hooks/check-in/get-check-ins"
@@ -46,6 +47,7 @@ const CopilotWrap = walkthroughable(View)
 
 export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
   const { user } = useAuth()
+  const { recentEntries } = useJournal()
   const { data: profile, isLoading: profileLoading } = useGetProfile(user?.id || "")
   const { checkForActiveSubscription } = useSubscription()
   const { openPaywall } = usePaywall()
@@ -249,6 +251,10 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
       openPaywall({ source: "Check-ins", onSubscribed: () => navigation.navigate("CheckIn") })
     }
   }, [checkForActiveSubscription, navigation, openPaywall])
+
+  const openJournalList = useCallback(() => {
+    navigation.getParent()?.navigate("Tools", { screen: "JournalList" })
+  }, [navigation])
 
   const renderDailyCheckInStatus = () => {
     if (todaysCheckInError) return <Text size="xs" tx="home:checkInCard.errorText" />
@@ -582,6 +588,85 @@ export const HomeScreen: FC<HomeScreenProps> = ({ navigation }) => {
                   renderCheckInHistory()
                 )
               }
+            />
+          </CopilotWrap>
+        </CopilotStep>
+
+        {/* Recent journal (below previous check-ins) — framed like Goals card */}
+        <CopilotStep
+          order={4}
+          name="recent_journal"
+          text="Recent journal: Quick access to your latest entries. Open Journaling from Tools to add more."
+        >
+          <CopilotWrap collapsable={false} style={{ width: "100%" }}>
+            <Card style={{ padding: spacing.md, marginTop: spacing.md }}
+            HeadingComponent={
+              <View style={themed($centeredSpacedRow)}>
+                <View style={themed($cardHeaderRow)}>
+                  <Journal width={24} height={24} color={colors.text} strokeWidth={1.5} />
+                  <Text size="xs" weight="semiBold" tx="home:recentJournal.heading" />
+                </View>
+                <Button
+                  style={{ minHeight: 16, paddingVertical: 4, alignItems: "center" }}
+                  textStyle={{ fontSize: 12 }}
+                  tx="home:recentJournal.seeAll"
+                  onPress={openJournalList}
+                />
+              </View>
+            }
+            ContentComponent={
+              recentEntries.length === 0 ? (
+                <View style={{ marginTop: spacing.lg }}>
+                  <Text
+                    centered
+                    size="xs"
+                    style={{ color: colors.textDim }}
+                    tx="home:recentJournal.emptyText"
+                  />
+                </View>
+              ) : (
+                <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                  {recentEntries.slice(0, 3).map((e, index) => (
+                    <TouchableOpacity key={e.id} onPress={openJournalList} activeOpacity={0.85}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: spacing.sm,
+                          paddingVertical: spacing.xs,
+                          borderBottomWidth: index !== Math.min(recentEntries.length, 5) - 1 ? 1 : 0,
+                          borderBottomColor: colors.palette.neutral300,
+                        }}
+                      >
+                        <Text size="xxs" numberOfLines={2} weight="medium" style={{ flex: 1 }}>
+                          {e.summary}
+                        </Text>
+                        <Text size="xxs" style={{ color: colors.textDim }}>
+                          {new Date(e.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )
+            }
+            FooterComponent={
+              recentEntries.length === 0 ? (
+                <Button
+                  onPress={openJournalList}
+                  LeftAccessory={() => (
+                    <Plus color={colors.palette.primary900} width={24} height={24} />
+                  )}
+                  style={{ marginTop: spacing.md, gap: spacing.sm }}
+                  tx="home:recentJournal.startEntryButton"
+                />
+              ) : (
+                <></>
+              )
+            }
             />
           </CopilotWrap>
         </CopilotStep>

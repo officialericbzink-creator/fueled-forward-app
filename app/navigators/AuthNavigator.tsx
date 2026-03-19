@@ -6,10 +6,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { CustomTabBar } from "@/components/CustomTabBar"
 import { CheckInProvider } from "@/context/CheckInContext"
+import { JournalProvider } from "@/context/JournalContext"
 import { AppStackParamList, AppStackScreenProps } from "@/navigators/AppNavigator"
-import { ResourcesNavigator, ResourcesNavigatorParamList } from "@/navigators/ResourcesNavigator"
-import { AIChatScreen } from "@/screens/ChatScreen"
-import { HomeScreen } from "@/screens/HomeScreen"
+import { ResourcesNavigator, ResourcesStackParamList } from "@/navigators/ResourcesNavigator"
+import { ToolsNavigator, ToolsStackParamList } from "@/navigators/ToolsNavigator"
+import { SnapshotScreen } from "@/screens/SnapshotScreen"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 
@@ -17,8 +18,9 @@ import { HomeCheckInNavigator } from "./CheckInNavigator"
 
 export type AuthNavigatorParamList = {
   Home: undefined
-  // AIChat: undefined
-  Resources: NavigatorScreenParams<ResourcesNavigatorParamList>
+  Tools: NavigatorScreenParams<ToolsStackParamList>
+  Snapshot: undefined
+  Resources: NavigatorScreenParams<ResourcesStackParamList>
 }
 
 export type AuthTabScreenProps<T extends keyof AuthNavigatorParamList> = CompositeScreenProps<
@@ -34,8 +36,9 @@ export const AuthNavigator = () => {
     theme: { colors },
   } = useAppTheme()
   return (
-    <CheckInProvider>
-      <CopilotProvider
+    <JournalProvider>
+      <CheckInProvider>
+        <CopilotProvider
         labels={{ skip: "Skip", next: "Next", previous: "Back", finish: "Done" }}
         backdropColor="rgba(0, 0, 0, 0.5)"
       >
@@ -54,18 +57,14 @@ export const AuthNavigator = () => {
           },
         }}
       >
-        <Tab.Screen name={"Home"} component={HomeCheckInNavigator} />
-        {/*<Tab.Screen
-          name={"AIChat"}
-          component={AIChatScreen}
-          options={{
-            tabBarStyle: { display: "none" }, // Hide tab bar on this screen only
-          }}
-        />*/}
-        <Tab.Screen name={"Resources"} component={ResourcesNavigator} />
+        <Tab.Screen name="Home" component={HomeCheckInNavigator} />
+        <Tab.Screen name="Tools" component={ToolsNavigator} />
+        <Tab.Screen name="Snapshot" component={SnapshotScreen} />
+        <Tab.Screen name="Resources" component={ResourcesNavigator} />
         </Tab.Navigator>
-      </CopilotProvider>
-    </CheckInProvider>
+        </CopilotProvider>
+      </CheckInProvider>
+    </JournalProvider>
   )
 }
 

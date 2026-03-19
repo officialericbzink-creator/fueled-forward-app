@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from "react"
 import { View, TouchableOpacity, StyleSheet, Dimensions, ViewStyle } from "react-native"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
-import { HomeSimple, OpenBook, ChatLinesSolid } from "iconoir-react-native"
+import { HomeSimple, OpenBook, ChatLinesSolid, Tools, Brain } from "iconoir-react-native"
 import { CopilotStep, useCopilot, walkthroughable } from "react-native-copilot"
 
 import { Text } from "@/components/Text"
@@ -76,11 +76,45 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
           )
         })}
 
-        {/* Center AI Chat — Tools step */}
+        {/* Tools Tab (between Home and Chat) */}
+        {state.routes.map((route, index) => {
+          if (index !== 1) return null
+          const isFocused = state.index === index
+          const onPress = () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            })
+            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name)
+          }
+          return (
+            <CopilotStep
+              key={route.key}
+              order={5}
+              name="tools_tab"
+              text="Tools: Journaling and more supportive tools live here."
+            >
+              <CopilotBox style={styles.tab}>
+                <TouchableOpacity onPress={onPress} style={{ alignItems: "center" }} activeOpacity={0.7}>
+                  <Tools
+                    height={24}
+                    width={24}
+                    color={isFocused ? "#212121" : "#8E8E93"}
+                    strokeWidth={isFocused ? 2 : 1}
+                  />
+                  <Text style={{ fontSize: 10, lineHeight: 15 }}>{route.name}</Text>
+                </TouchableOpacity>
+              </CopilotBox>
+            </CopilotStep>
+          )
+        })}
+
+        {/* Center Chat */}
         <CopilotStep
-          order={4}
+          order={6}
           name="tools_chat"
-          text="Tools: Tap Chat to talk to Eric anytime."
+          text="Tap Chat to talk to Eric anytime."
         >
           <CopilotBox style={styles.centerButton}>
             <TouchableOpacity
@@ -97,20 +131,41 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
           </CopilotBox>
         </CopilotStep>
 
-        {/* Resources Tab */}
+        {/* Snapshot Tab (balance between Chat and Resources) */}
         {state.routes.map((route, index) => {
-          if (index !== 1) return null
-
-          const { options } = descriptors[route.key]
+          if (index !== 2) return null
           const isFocused = state.index === index
-
           const onPress = () => {
             const event = navigation.emit({
               type: "tabPress",
               target: route.key,
               canPreventDefault: true,
             })
+            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name)
+          }
+          return (
+            <TouchableOpacity key={route.key} onPress={onPress} style={styles.tab} activeOpacity={0.7}>
+              <Brain
+                height={24}
+                width={24}
+                color={isFocused ? "#212121" : "#8E8E93"}
+                strokeWidth={isFocused ? 2 : 1}
+              />
+              <Text style={{ fontSize: 10, lineHeight: 15 }}>{route.name}</Text>
+            </TouchableOpacity>
+          )
+        })}
 
+        {/* Resources Tab */}
+        {state.routes.map((route, index) => {
+          if (index !== 3) return null
+          const isFocused = state.index === index
+          const onPress = () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            })
             if (!isFocused && !event.defaultPrevented) {
               if (checkForActiveSubscription()) {
                 navigation.navigate(route.name)
@@ -122,11 +177,10 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
               }
             }
           }
-
           return (
             <CopilotStep
-              key={index}
-              order={5}
+              key={route.key}
+              order={7}
               name="resources_tab"
               text="Resources: Articles and tools to support your journey."
             >
