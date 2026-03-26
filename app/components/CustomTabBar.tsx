@@ -86,12 +86,21 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
               target: route.key,
               canPreventDefault: true,
             })
-            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name)
+            if (!isFocused && !event.defaultPrevented) {
+              if (checkForActiveSubscription()) {
+                navigation.navigate(route.name)
+              } else {
+                openPaywall({
+                  source: "Tools",
+                  onSubscribed: () => navigation.navigate(route.name),
+                })
+              }
+            }
           }
           return (
             <CopilotStep
               key={route.key}
-              order={5}
+              order={4}
               name="tools_tab"
               text="Tools: Journaling and more supportive tools live here."
             >
@@ -112,7 +121,7 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
 
         {/* Center Chat */}
         <CopilotStep
-          order={6}
+          order={5}
           name="tools_chat"
           text="Tap Chat to talk to Eric anytime."
         >
@@ -141,18 +150,36 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
               target: route.key,
               canPreventDefault: true,
             })
-            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name)
+            if (!isFocused && !event.defaultPrevented) {
+              if (checkForActiveSubscription()) {
+                navigation.navigate(route.name)
+              } else {
+                openPaywall({
+                  source: "Snapshot",
+                  onSubscribed: () => navigation.navigate(route.name),
+                })
+              }
+            }
           }
           return (
-            <TouchableOpacity key={route.key} onPress={onPress} style={styles.tab} activeOpacity={0.7}>
-              <Brain
-                height={24}
-                width={24}
-                color={isFocused ? "#212121" : "#8E8E93"}
-                strokeWidth={isFocused ? 2 : 1}
-              />
-              <Text style={{ fontSize: 10, lineHeight: 15 }}>{route.name}</Text>
-            </TouchableOpacity>
+            <CopilotStep
+              key={route.key}
+              order={6}
+              name="snapshot_tab"
+              text="Snapshot: See your progress summary and insights in one place."
+            >
+              <CopilotBox style={styles.tab}>
+                <TouchableOpacity onPress={onPress} style={{ alignItems: "center" }} activeOpacity={0.7}>
+                  <Brain
+                    height={24}
+                    width={24}
+                    color={isFocused ? "#212121" : "#8E8E93"}
+                    strokeWidth={isFocused ? 2 : 1}
+                  />
+                  <Text style={{ fontSize: 10, lineHeight: 15 }}>{route.name}</Text>
+                </TouchableOpacity>
+              </CopilotBox>
+            </CopilotStep>
           )
         })}
 

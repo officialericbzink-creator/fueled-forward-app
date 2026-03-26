@@ -37,6 +37,7 @@ const DISCLAIMER_MESSAGE =
 export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
   const { session } = useAuth()
   const { socket, connected, markAsRead } = useSocket()
+  const [showSocketDisconnectedBanner, setShowSocketDisconnectedBanner] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
@@ -79,6 +80,17 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
       setMessages(conversationData.messages)
     }
   }, [conversationData])
+
+  /** Top banner when offline: avoid flashing during normal initial connect (~1–2s). */
+  const SOCKET_BANNER_DEBOUNCE_MS = 2000
+  useEffect(() => {
+    if (connected || !session?.user?.id) {
+      setShowSocketDisconnectedBanner(false)
+      return
+    }
+    const id = setTimeout(() => setShowSocketDisconnectedBanner(true), SOCKET_BANNER_DEBOUNCE_MS)
+    return () => clearTimeout(id)
+  }, [connected, session?.user?.id])
 
   // Clear no-response timeout (used from effect and sendMessage)
   const clearNoResponseTimeout = () => {
@@ -262,6 +274,11 @@ export const AIChatScreen: FC<AIChatScreenProps> = ({ navigation }) => {
       keyboardOffset={headerHeight}
     >
       <View style={{ flex: 1 }}>
+        {showSocketDisconnectedBanner ? (
+          <View style={themed($socketDisconnectedBanner)} accessibilityRole="alert">
+            <Text size="xs" tx="chat:socketDisconnectedBanner" style={themed($socketDisconnectedBannerText)} />
+          </View>
+        ) : null}
         <ScrollView
           ref={scrollViewRef}
           style={{ flex: 1, paddingHorizontal: spacing.sm }}
@@ -371,6 +388,19 @@ const $loadingContainer: ThemedStyle<ViewStyle> = () => ({
   flex: 1,
   justifyContent: "center",
   alignItems: "center",
+})
+
+const $socketDisconnectedBanner: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  backgroundColor: colors.palette.warning100,
+  borderBottomWidth: 1,
+  borderBottomColor: colors.palette.warning300,
+})
+
+const $socketDisconnectedBannerText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.palette.warning800,
+  textAlign: "center",
 })
 
 const $ericMessage: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({

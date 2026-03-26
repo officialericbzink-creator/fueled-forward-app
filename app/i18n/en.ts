@@ -140,7 +140,24 @@ const en = {
   },
   snapshot: {
     title: "Snapshot",
-    comingSoon: "Coming soon",
+    descriptor:
+      "Get an AI summary of patterns from your journals, check-ins, Eric chats, and goals—useful to prepare for a therapy session.",
+    generateButton: "Generate snapshot",
+    generateDoneToday: "Done for today",
+    generating: "Generating…",
+    strugglesHeading: "Main struggles",
+    positivesHeading: "Positive patterns",
+    overviewHeading: "Overview",
+    historyHeading: "Past snapshots",
+    tapToView: "Tap to view details",
+    emptyHistory: "No snapshots yet",
+    emptyHistorySub: "Tap Generate to create your first summary from your app activity.",
+    loadError: "Could not load snapshots.",
+    generateError: "Could not generate snapshot. Try again.",
+    generateSuccess: "Snapshot ready",
+    generateSuccessSub: "Your summary is saved below.",
+    generateLimitToday: "You’ve already generated today’s snapshot. You can review it below.",
+    modalTitle: "Snapshot",
   },
   toolsPlaceholder: {
     title: "Tools",
@@ -148,6 +165,8 @@ const en = {
   },
   checkIn: {},
   chat: {
+    socketDisconnectedBanner:
+      "Not connected to chat. Try restarting the app to reconnect.",
     welcome: {
       messageOne:
         "Hey, I'm Eric, your personal AI companion for any struggles you may be going through.",
