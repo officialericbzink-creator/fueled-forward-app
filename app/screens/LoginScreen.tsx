@@ -1,4 +1,4 @@
-import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
+import { ComponentType, FC, useMemo, useRef, useState } from "react"
 import { Linking, Pressable, TextInput, View, ViewStyle } from "react-native"
 import Toast from "react-native-toast-message"
 
@@ -26,9 +26,6 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const [authPassword, setAuthPassword] = useState("")
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const lastAutoLoginKey = useRef<string | null>(null)
-  const wasAutoFilled = useRef(false)
-  const prevPasswordLength = useRef(0)
 
   const {
     themed,
@@ -97,41 +94,6 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
     }
   }
 
-  const handlePasswordChange = (text: string) => {
-    const lengthDiff = text.length - prevPasswordLength.current
-    // Autofill typically adds many characters at once (> 3)
-    if (lengthDiff > 3) {
-      wasAutoFilled.current = true
-    }
-    prevPasswordLength.current = text.length
-    setAuthPassword(text)
-  }
-
-  // Auto-submit ONLY after iOS Password AutoFill (FaceID) fills credentials.
-  // Only triggers if password was filled via autofill (many chars at once).
-  useEffect(() => {
-    if (isSubmitted) return
-    if (!wasAutoFilled.current) return
-
-    const email = authEmail.trim()
-    const password = authPassword
-
-    if (!email || email.length < 6) return
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return
-    if (!password || password.length < 6) return
-
-    const key = `${email}::${password}`
-    if (lastAutoLoginKey.current === key) return
-    lastAutoLoginKey.current = key
-
-    const timeout = setTimeout(() => {
-      login()
-    }, 250)
-
-    return () => clearTimeout(timeout)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authEmail, authPassword, isSubmitted])
-
   const PasswordRightAccessory: ComponentType<TextFieldAccessoryProps> = useMemo(
     () =>
       function PasswordRightAccessory(props: TextFieldAccessoryProps) {
@@ -160,10 +122,12 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         value={authEmail}
         onChangeText={setAuthEmail}
         containerStyle={themed($textField)}
-        textContentType="emailAddress"
+        textContentType="none"
         autoCapitalize="none"
-        autoComplete="email"
+        autoComplete="off"
+        importantForAutofill="no"
         autoCorrect={false}
+        spellCheck={false}
         keyboardType="email-address"
         returnKeyType="next"
         labelTx="auth:signIn.emailFieldLabel"
@@ -174,12 +138,14 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       <TextField
         ref={authPasswordInput}
         value={authPassword}
-        onChangeText={handlePasswordChange}
+        onChangeText={setAuthPassword}
         containerStyle={themed($textField)}
         autoCapitalize="none"
-        autoComplete="password"
+        autoComplete="off"
         textContentType="password"
+        importantForAutofill="no"
         autoCorrect={false}
+        spellCheck={false}
         secureTextEntry={isAuthPasswordHidden}
         returnKeyType="done"
         labelTx="auth:signIn.passwordFieldLabel"
